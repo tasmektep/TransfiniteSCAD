@@ -13,7 +13,7 @@ namespace SCAD
         public DomainComponent()
           : base("DomainComponent", "Nickname",
               "Description",
-              "Category", "Subcategory")
+               "SCAD", "Transfinite")
         {
         }
 
@@ -37,6 +37,8 @@ namespace SCAD
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
+            List<Curve> BndCurves = new List<Curve>(), DomainCurves;
+            Domain dmn = new Domain(BndCurves, out DomainCurves);
         }
 
         /// <summary>
