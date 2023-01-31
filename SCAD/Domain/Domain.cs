@@ -9,10 +9,18 @@ namespace SCAD
 {
     public class Domain
     {
+
+
         private 
             List<Curve> m_BndCurves;
             List<Curve> m_DomainCurves;
 
+        /// <summary>
+        /// Gets bounding curves to create Domain Curves
+        /// returns: The Domain Curves
+        /// </summary>
+        /// <param name="BndCurves"> Bounding Curves </param>
+        /// <param name="DomainCurves"> Domain Curves </param>
         public Domain(List<Curve> BndCurves, out List<Curve> DomainCurves)
         {
             m_BndCurves = BndCurves;
@@ -21,7 +29,7 @@ namespace SCAD
             DomainCurves = m_DomainCurves;
         }
 
-        public void ComputeDomainPolygon()
+        private void ComputeDomainPolygon()
         {
             double TotL = 0, L;
             List<double> Ls = new List<double>();

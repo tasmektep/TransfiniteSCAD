@@ -11,7 +11,7 @@ namespace SCAD
         /// Initializes a new instance of the DomainComponent class.
         /// </summary>
         public DomainComponent()
-          : base("DomainComponent", "Nickname",
+          : base("Domain", "Domain",
               "Description",
                "SCAD", "Transfinite")
         {
@@ -22,6 +22,7 @@ namespace SCAD
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
+            pManager.AddCurveParameter("Boundary Curves", "BCurves", " Boundary Curves", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -29,6 +30,7 @@ namespace SCAD
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
+            pManager.AddCurveParameter("Domain Curves", "DCurves", " Domain Curves", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -38,7 +40,9 @@ namespace SCAD
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             List<Curve> BndCurves = new List<Curve>(), DomainCurves;
+            DA.GetDataList(0, BndCurves);
             Domain dmn = new Domain(BndCurves, out DomainCurves);
+            DA.SetDataList(0, DomainCurves);
         }
 
         /// <summary>
