@@ -16,10 +16,10 @@ namespace SCAD
             List<Curve> m_DomainCurves;
 
         /// <summary>
-        /// Gets bounding curves to create Domain Curves
+        /// Gets boundary curves to create Domain Curves
         /// returns: The Domain Curves
         /// </summary>
-        /// <param name="BndCurves"> Bounding Curves </param>
+        /// <param name="BndCurves"> Boundary Curves </param>
         /// <param name="DomainCurves"> Domain Curves </param>
         public Domain(List<Curve> BndCurves, out List<Curve> DomainCurves)
         {
