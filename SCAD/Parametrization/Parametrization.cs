@@ -53,7 +53,6 @@ namespace SCAD
             public GridValue[] grid { get; set; }
             public double[] offset { get; set; }
             public double scaling { get; set; }
-
         };
 
 

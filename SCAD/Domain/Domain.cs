@@ -24,7 +24,6 @@ namespace SCAD
         public Domain(List<Curve> BndCurves, out List<Curve> DomainCurves)
         {
             m_BndCurves = BndCurves;
-
             ComputeDomainPolygon();
             DomainCurves = m_DomainCurves;
         }
