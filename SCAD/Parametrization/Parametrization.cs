@@ -1,5 +1,6 @@
 ﻿using Grasshopper.Kernel;
 using Rhino.Geometry;
+using Rhino.Input.Custom;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,8 +13,32 @@ using static SCAD.HarmonicClass;
 
 namespace SCAD
 {
+    public enum Parametrization_Method
+    {
+        //
+        // Summary:
+        //      Uses Side Blending functions
+        IsoLine = 0,
+        //
+        // Summary:
+        //      Uses Corner Blending functions
+        MVC,
+        //
+        // Summary:
+        //      Uses Special Side Blending functions
+        Harmonic,
+        //
+        // Summary:
+        //      Uses Special Side Blending functions
+        RadialDistanceFunction
+    }
+
     class Parametrization
     {
+
+     
+
+        public Parametrization_Method method = 0;
         // Input    ::
 
         // Output   ::
@@ -26,9 +51,25 @@ namespace SCAD
 
 
         //Harmonic 
-
-        public void Harmonic()
+        public Parametrization(Parametrization_Method method)
         {
+            this.method = method;
+        }
+
+        public List<(double,double)> GetPoint(double u, double v)
+        {
+            List < (double, double) > si_di = new List<(double,double)>();  
+           
+            if (method == Parametrization_Method.Harmonic)
+            {
+                si_di = Harmonic(u,  v);
+            }
+            return si_di;
+        }
+
+        private List<(double, double)> Harmonic(double u, double v)
+        {
+            return null;
         }
 
 
@@ -677,6 +718,25 @@ namespace SCAD
             }
             return IsolinesList[5];
         }
+    }
+
+
+    public class RadialDistanceFunction
+    {
+        /// <summary>
+        /// Radial distance functions were suggested by Charrot and Gregory, and these also work for non-regular domains.
+        /// </summary>
+        /// <param name="u"> u value</param>
+        /// <param name="v"> v value</param>
+        /// <param name="domaincurves"> domain curves</param>
+        /// <param name="si_di"> local parametrization distance from each curve, first item is s value, second item is d value</param>
+        public RadialDistanceFunction(double u, double v, List<Curve> domaincurves, out List<(double, double)> si_di)
+        {
+            si_di = new List<(double, double)>();
+        }
+        //Alper, bitmediği için buraya not düşüyorum. burada domain points dediğim şey domain'in köşe noktaları, ben bunları bir
+        //öncekinde içerde line'a çevirmişim ama biz bunu başka bir şekilde ayarlayabiliriz. 
+
     }
 
 }

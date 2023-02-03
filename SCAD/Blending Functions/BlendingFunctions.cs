@@ -6,6 +6,26 @@ using System.Threading.Tasks;
 
 namespace SCAD
 {
+
+
+    public enum Blending_Methods
+    {
+        //
+        // Summary:
+        //      Uses Side Blending functions
+        Side_Blending = 0,
+        //
+        // Summary:
+        //      Uses Corner Blending functions
+        Corner_Blending,
+        //
+        // Summary:
+        //      Uses Special Side Blending functions
+        Special_Side_Blending
+
+
+    }
+
     /// <summary>
     ///  Input  : 
     ///  Output :
@@ -18,38 +38,22 @@ namespace SCAD
 
 
 
-        public enum Method
+       
+
+
+        public BlendingFunctions(int distance, Blending_Methods method)
         {
-            //
-            // Summary:
-            //      Uses Side Blending functions
-            Side_Blending = 0,
-            //
-            // Summary:
-            //      Uses Corner Blending functions
-            Corner_Blending,
-            //
-            // Summary:
-            //      Uses Special Side Blending functions
-            Special_Side_Blending
-
-
-        }
-
-
-        public BlendingFunctions(int distance, Method method)
-        {
-            if( method == Method.Side_Blending)
+            if( method == Blending_Methods.Side_Blending)
             {
 
             }
 
-            if (method == Method.Special_Side_Blending)
+            if (method == Blending_Methods.Special_Side_Blending)
             {
 
             }
 
-            if (method == Method.Corner_Blending)
+            if (method == Blending_Methods.Corner_Blending)
             {
 
             }
