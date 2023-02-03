@@ -31,13 +31,8 @@ namespace SCAD
             List<double> di = new List<double>();
             (si, di) = prm.GetPoint(u, v);
 
-            List<double> d_i = new List<double>();
-            for (int i = 0; i < si.Count; i++)
-            {
-                d_i.Add(di[i]);
-            }
             BlendingFunctions blending = new BlendingFunctions(Blending_Method.Special_Side_Blending);
-            List<double> Value = blending.GetBlending(d_i);
+            List<double> Value = blending.GetBlending(di);
 
             Point3d r_sum = new Point3d();
             for (int i = 0; i < curves.Count; i++)
