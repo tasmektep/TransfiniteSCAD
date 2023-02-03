@@ -1,5 +1,6 @@
 ﻿using Grasshopper.Kernel;
 using Rhino.Geometry;
+using Rhino.Geometry.Intersect;
 using Rhino.Input.Custom;
 using System;
 using System.Collections.Generic;
@@ -29,16 +30,18 @@ namespace SCAD
         Harmonic,
         //
         // Summary:
-        //      Uses Special Side Blending functions
+        //      Uses Radial distance functions were suggested by Charrot and Gregory, and these also work for non-regular domains. Input domains should be lines.
         RadialDistanceFunction
     }
 
     class Parametrization
     {
-
-     
-
         public Parametrization_Method method = 0;
+        public List<Curve> domainC = new List<Curve>();
+        public List<Line> domainL = new List<Line>();
+        public List<HarmonicMap> HarmonicMapList_si = new List<HarmonicMap>();
+        public List<HarmonicMap> HarmonicMapList_di = new List<HarmonicMap>();
+
         // Input    ::
 
         // Output   ::
@@ -51,27 +54,312 @@ namespace SCAD
 
 
         //Harmonic 
-        public Parametrization(Parametrization_Method method)
+        public Parametrization(Parametrization_Method method,List<Curve> domaincurves)
         {
             this.method = method;
+            this.domainC = domaincurves;
+        }
+        public Parametrization(Parametrization_Method method, List<Line> domainlines)
+        {
+            this.method = method;
+            this.domainL = domainlines;
         }
 
-        public List<(double,double)> GetPoint(double u, double v)
+        public (List<double> si, List<double> di) GetPoint(double u, double v)
         {
-            List < (double, double) > si_di = new List<(double,double)>();  
-           
+            List<double> si = new List<double>();
+            List<double> di = new List<double>();
+
             if (method == Parametrization_Method.Harmonic)
             {
-                si_di = Harmonic(u,  v);
+                HarmonicMapCreate_curve(domainC);
+                (si, di) = Harmonic(u,  v, domainC);
             }
-            return si_di;
+            else if(method == Parametrization_Method.RadialDistanceFunction)
+            {
+                (si, di) = RadialDistanceFunction(u, v, domainL);
+            }
+            return (si: si, di: di);
         }
 
-        private List<(double, double)> Harmonic(double u, double v)
+        private (List<double> si, List<double> di) Harmonic(double u, double v, List<Curve> domaincurve)
         {
-            return null;
+            List<double> si = new List<double>();
+            List<double> di = new List<double>();
+
+            int j;
+            Point3d point = new Point3d(u, v, 0);
+            for (int i = 0; i < domaincurve.Count; i++)
+            {
+                ///
+                bool success_si = harmonic_eval(HarmonicMapList_si[i], point, out double result_si);//harmonic calculation
+                ///
+                bool success_di = harmonic_eval(HarmonicMapList_di[i], point, out double result_di);//harmonic calculation
+                ///
+
+                //if (success_si == false) AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Harmonic function si!!");
+                //if (success_di == false) AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Harmonic function di!!");
+                if (success_si == false) System.Diagnostics.Debug.WriteLine("Error Harmonic function si!!");
+                if (success_di == false) System.Diagnostics.Debug.WriteLine("Error Harmonic function di!!");
+
+                si.Add(result_si);
+                di.Add(result_di);
+            }
+            return (si: si, di: di);
+
         }
 
+        private void HarmonicMapCreate_curve(List<Curve> domaincurves)
+        {
+            HarmonicMapList_si = new List<HarmonicMap>();
+            HarmonicMapList_di = new List<HarmonicMap>();
+            List<(double, double)> output = new List<(double, double)>();
+            int i_before, i_after;
+            double value = 1;
+
+
+            ///// Extraction Rhino curve control points for harmonic function
+            List<List<Point3d>> curvepointlist =  new List<List<Point3d>>();
+            for (int i = 0; i < domaincurves.Count; i++)
+            {
+                List<Point3d> pts = new List<Point3d>();
+                foreach (var item in domaincurves[i].ToNurbsCurve().Points)
+                {
+                    pts.Add(item.Location);
+                }
+                curvepointlist.Add(pts);
+            }
+
+
+            //// Domain curve creation without "value" or "z"
+            List<Point3d[]> DomainPolygonHarmonic_main = new List<Point3d[]> { };
+            for (int i = 0; i < curvepointlist.Count; i++)
+            {
+                DomainPolygonHarmonic_main.Add(curvepointlist[i].ToArray());
+            }
+
+            for (int i = 0; i < DomainPolygonHarmonic_main.Count; i++)
+            {
+                i_before = IndexWrapper((i - 1), DomainPolygonHarmonic_main.Count);
+                int i_beforebefore = IndexWrapper((i - 2), DomainPolygonHarmonic_main.Count);
+                i_after = IndexWrapper((i + 1), DomainPolygonHarmonic_main.Count);
+
+                ///***********
+                ///harmonic map created for si -----------------------------------
+                ///***********
+                double[] min = { 0, 0 }, max = { 20, 20 }; // domain polygon size
+                HarmonicMap map_si;
+                int levels = 9;//???
+                map_si = harmonic_create(min, max, levels);
+
+                ///Assigned Value on domain points, si
+                List<Point3d[]> DomainPolygonHarmonic = new List<Point3d[]>();
+                for (int ii = 0; ii < DomainPolygonHarmonic_main.Count; ii++)
+                {
+                    DomainPolygonHarmonic.Add(new Point3d[DomainPolygonHarmonic_main[ii].Length]);
+                    if (ii == i_after)
+                    {
+                        for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
+                        {
+                            DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, value);
+                        }
+                    }
+                    else if (ii == i_before)
+                    {
+                        for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
+                        {
+                            DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, 0);
+                        }
+                    }
+                    else if (ii == i)
+                    {
+                        double stepsize = value / (DomainPolygonHarmonic[ii].Length - 1);
+                        for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
+                        {
+                            DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, stepsize * pt);
+                        }
+                    }
+                    else if (ii == i_beforebefore)
+                    {
+                        double stepsize = value / (DomainPolygonHarmonic[ii].Length - 1);
+                        for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
+                        {
+                            DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, stepsize * ((DomainPolygonHarmonic[ii].Length - 1) - pt));
+                        }
+                    }
+                    else
+                    {
+                        for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
+                        {
+                            DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, value);
+                        }
+                    }
+                }
+                ////
+
+                for (int ii = 0; ii < DomainPolygonHarmonic.Count; ++ii)
+                {
+                    ///
+                    ///middle point repeat
+                    if (ii == 2)
+                    {
+                        List<Point3d> idle = DomainPolygonHarmonic[ii].ToList();
+                        for (int xx = 0; xx < idle.Count; xx++)
+                        {
+                            if (xx == 3)
+                            {
+                                Point3d asd = new Point3d(idle[xx]);
+                                idle.Insert(xx, asd);
+                                idle.Insert(xx, asd);
+                                idle.Insert(xx, asd);
+                                idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                break;
+                            }
+                        }
+                        DomainPolygonHarmonic[ii] = idle.ToArray();
+                    }
+                    ////
+                    ///
+                    harmonic_add_curve(map_si, DomainPolygonHarmonic[ii], DomainPolygonHarmonic[ii].Length);
+                }
+                harmonic_solve(map_si, 1.0e-5, false);
+                ///****
+                HarmonicMapList_si.Add(map_si);
+                ////
+                ////--------------------------------------------------------------
+
+                ///***********
+                ///harmonic map created for di -----------------------------------
+                ///***********
+                double[] min_di = { 0, 0 }, max_di = { 20, 20 }; // domain polygon size
+                HarmonicMap map_di;
+                int levels_di = 9;//???
+                map_di = harmonic_create(min_di, max_di, levels_di);
+
+                ///Assigned Value on domain points, di
+                DomainPolygonHarmonic = new List<Point3d[]>();
+                for (int ii = 0; ii < DomainPolygonHarmonic_main.Count; ii++)
+                {
+                    DomainPolygonHarmonic.Add(new Point3d[DomainPolygonHarmonic_main[ii].Length]);
+                    if (ii == i_after)
+                    {
+                        double stepsize = value / (DomainPolygonHarmonic[ii].Length - 1);
+                        for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
+                        {
+                            DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, stepsize * pt);
+                        }
+                    }
+                    else if (ii == i_before)
+                    {
+                        double stepsize = value / (DomainPolygonHarmonic[ii].Length - 1);
+                        for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
+                        {
+                            DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, stepsize * ((DomainPolygonHarmonic[ii].Length - 1) - pt));
+                        }
+                    }
+                    else if (ii == i)
+                    {
+                        for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
+                        {
+                            DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, 0);
+                        }
+                    }
+                    else
+                    {
+                        for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
+                        {
+                            DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, value);
+                        }
+                    }
+                }
+                ////
+
+                for (int ii = 0; ii < DomainPolygonHarmonic.Count; ++ii)
+                {
+                    ///
+                    ///middle point repeat
+                    if (ii == 2)
+                    {
+                        List<Point3d> idle = DomainPolygonHarmonic[ii].ToList();
+                        for (int xx = 0; xx < idle.Count; xx++)
+                        {
+                            if (xx == 3)
+                            {
+                                Point3d asd = new Point3d(idle[xx]);
+                                idle.Insert(xx, asd);
+                                idle.Insert(xx, asd);
+                                idle.Insert(xx, asd);
+                                idle.Insert(xx, asd);
+                                idle.Insert(xx, asd);
+                                break;
+                            }
+                        }
+                        DomainPolygonHarmonic[ii] = idle.ToArray();
+                    }
+                    ////
+                    ///
+                    harmonic_add_curve(map_di, DomainPolygonHarmonic[ii], DomainPolygonHarmonic[ii].Length);
+                }
+                harmonic_solve(map_di, 1.0e-5, false);
+                ///*****
+                HarmonicMapList_di.Add(map_di);
+                ////
+                ////-------------------------------------------------------------
+            }
+
+        }
+
+
+        /// <summary>
+        /// Radial distance functions were suggested by Charrot and Gregory, and these also work for non-regular domains.
+        /// </summary>
+        /// <param name="u"> u value</param>
+        /// <param name="v"> v value</param>
+        /// <param name="domainlines"> domain lines</param>
+        /// <param name="si_di"> local parametrization distance from each curve, first item is s value, second item is d value</param>
+        private (List<double> si, List<double> di) RadialDistanceFunction(double u, double v,List<Line> domainlines)
+        {
+            List<double> si = new List<double>();
+            List<double> di = new List<double>();
+            int i_before, i_after, i_afterafter;
+
+            int n = domainlines.Count;
+            List<Point3d> domainpoints = new List<Point3d>();
+            foreach (var item in domainlines)
+            {
+                domainpoints.Add(item.From);
+            }
+            for (int i = 0; i < n; i++)
+            {
+
+                i_before = IndexWrapper((i - 1), n);
+                i_after = IndexWrapper((i + 1), n);
+                i_afterafter = IndexWrapper((i + 2), n);
+
+                Line i_beforeline = new Line(domainpoints[i], domainpoints[i_before]);
+                Line i_afterline = new Line(domainpoints[i_after], domainpoints[i_afterafter]);
+
+                bool A = Intersection.LineLine(i_beforeline, i_afterline, out double a, out double b, 0.001, false);
+                Point3d c_i = i_beforeline.PointAt(a);
+                Point3d c_i_0 = i_afterline.PointAt(b);
+
+
+                Line null_line = new Line(new Point3d(u, v, 0), c_i);
+                Line null_line2 = new Line(domainpoints[i], domainpoints[i_after]);
+                bool B = Intersection.LineLine(null_line, null_line2, out double a1, out double b2, 0.001, true);
+                Point3d e_i = null_line.PointAt(a1);
+                Point3d e_i0 = null_line2.PointAt(b2);
+
+                if (!A || !B || (c_i - c_i_0).Length > 0.000001 || (e_i - e_i0).Length > 0.000001)
+                    System.Diagnostics.Debug.WriteLine("Radial distance function domain line Intersection problem!!");
+                //AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Radial distance function domain line Intersection problem!!");
+
+                si.Add((e_i - domainpoints[i]).Length / (domainpoints[i_after] - domainpoints[i]).Length);
+                di.Add((new Point3d(u, v, 0) - e_i).Length);
+            }
+            return (si: si, di: di);
+        }
 
     }
 
@@ -720,23 +1008,5 @@ namespace SCAD
         }
     }
 
-
-    public class RadialDistanceFunction
-    {
-        /// <summary>
-        /// Radial distance functions were suggested by Charrot and Gregory, and these also work for non-regular domains.
-        /// </summary>
-        /// <param name="u"> u value</param>
-        /// <param name="v"> v value</param>
-        /// <param name="domaincurves"> domain curves</param>
-        /// <param name="si_di"> local parametrization distance from each curve, first item is s value, second item is d value</param>
-        public RadialDistanceFunction(double u, double v, List<Curve> domaincurves, out List<(double, double)> si_di)
-        {
-            si_di = new List<(double, double)>();
-        }
-        //Alper, bitmediği için buraya not düşüyorum. burada domain points dediğim şey domain'in köşe noktaları, ben bunları bir
-        //öncekinde içerde line'a çevirmişim ama biz bunu başka bir şekilde ayarlayabiliriz. 
-
-    }
 
 }
