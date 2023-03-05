@@ -40,6 +40,7 @@ namespace SCAD
                 double s = curves[i].Domain.Min + si[i] * (curves[i].Domain.Max - curves[i].Domain.Min);
 
                 Vector3d T = new Vector3d(); // Ribbon Vector EKSİKKKKK
+                //Vector3d T = frames_[(int)0.02 * resolution_].n;
                 Point3d r = curves[i].PointAt(s) + (di[i] * T);
 
                 r_sum += r * Value[i];
