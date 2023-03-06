@@ -42,7 +42,7 @@ namespace SCAD
         {
             List<Curve> curves_ = new List<Curve>();
             DA.GetDataList(0, curves_);
-            int resolution = 30;
+            int resolution = 20;
             var dm = new domain();
             dm.setSides(curves_);
             dm.Update();
