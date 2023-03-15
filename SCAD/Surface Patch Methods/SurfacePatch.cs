@@ -9,11 +9,24 @@ using static SCAD.Extensions;
 
 namespace SCAD
 {
-    class SurfacePatch
+    public class SurfacePatch
     {
+        Domain dm;
+        Parametrization prm;
+        Blending_Method blending_method;
 
-        ////
-        ///Blending function bana di değeri girdisi verildiğinde n (yani curve sayısı) kadar value değeri vermeli.
+        /// Isocurve Mean value
+
+
+        public SurfacePatch(Domain dm, Parametrization_Method method , Blending_Method blending_method = Blending_Method.Special_Side_Blending )
+        {
+            this.dm = dm;
+            this.blending_method = blending_method; 
+            if (method == Parametrization_Method.RadialDistanceFunction)
+                prm = new Parametrization(method, dm);
+            else if (method == Parametrization_Method.Harmonic_Pt)
+                prm = new Parametrization(Parametrization_Method.Harmonic_Pt, dm);
+        }
 
         /// <summary>
         /// kato
@@ -23,35 +36,16 @@ namespace SCAD
         /// <param name="v"> v value </param>
         /// <param name="curves"> boundary curves </param>
         /// <returns></returns>
-        public Point3d Kato_Suv(double u, double v, List<Curve> curves)
+        /// 
+        public Point3d Kato_Suv(double u, double v)
         {
-            var dm = new domain();
-            dm.setSides(curves);
-            dm.Update();
+            List<Curve> curves = dm.Curves;
 
-            var mesh = dm.MeshTopology(30);
-            var uvs = dm.parameters(30);
-            var vs = dm.vertices_;
-
-
-            List<Line> lines = new List<Line>();
-            for (int i = 0; i < 6; i++)
-            {
-                lines.Add(new Line(new Point3d(vs[i].X, vs[i].Y, 0), new Point3d(vs[(i + 1) % 6].X, vs[(i + 1) % 6].Y, 0)));
-            }
-            //new Domain(curves, out List<Curve> domaincurve);
-            //new Domain(curves, out List<Curve> domaincurve);
-            //Parametrization prm = new Parametrization(Parametrization_Method.Harmonic,domaincurve);
-            //List<double> si = new List<double>();
-            //List<double> di = new List<double>();
-            //(si, di) = prm.GetPoint(u, v);
-
-            Parametrization prm = new Parametrization(Parametrization_Method.RadialDistanceFunction, lines);
             List<double> si = new List<double>();
             List<double> di = new List<double>();
             (si, di) = prm.GetPoint(u, v);
 
-            BlendingFunctions blending = new BlendingFunctions(Blending_Method.Special_Side_Blending);
+            BlendingFunctions blending = new BlendingFunctions(blending_method);
             List<double> Value = blending.GetBlending(di);
 
             Point3d r_sum = new Point3d();

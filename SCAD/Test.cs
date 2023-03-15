@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-
+using System.Linq;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 
@@ -12,7 +12,7 @@ namespace SCAD
         /// Initializes a new instance of the Test class.
         /// </summary>
         public Test()
-          : base("Test", "Test",
+          : base("Transfinite Surface", "Transfinite",
               "Description",
              "SCAD", "Transfinite")
         {
@@ -23,7 +23,9 @@ namespace SCAD
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddCurveParameter("", "", "", GH_ParamAccess.list);
+            pManager.AddCurveParameter("Curves", "C", "The bounding curves", GH_ParamAccess.list);
+            pManager.AddIntegerParameter("Parametrization", "P", "Parametrization method", GH_ParamAccess.item);
+            pManager.AddIntegerParameter("Blending", "B", "Blending Method", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -31,7 +33,10 @@ namespace SCAD
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddMeshParameter("", "", "", GH_ParamAccess.item);
+            pManager.AddMeshParameter("Model", "M", "Mesh Model", GH_ParamAccess.item);
+            pManager.AddCurveParameter("Domain C", "D", "Domain curves", GH_ParamAccess.list);
+            pManager.AddPointParameter("Domain V", "Dv", "Domain vertices", GH_ParamAccess.list);
+
         }
 
         /// <summary>
@@ -41,29 +46,36 @@ namespace SCAD
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             List<Curve> curves_ = new List<Curve>();
+            int p =0, b = 0;
             DA.GetDataList(0, curves_);
-            int resolution = 20;
-            var dm = new domain();
-            dm.setSides(curves_);
+            DA.GetData(1, ref p);
+            DA.GetData(2, ref b);
+
+            var pm = (Parametrization_Method)p;
+            var bm = (Blending_Method)b;
+            int resolution = 30;
+            Domain dm = new Domain(resolution);
+            dm.SetSides(curves_);
             dm.Update();
 
-
-
-            var mesh = dm.MeshTopology(resolution);
-            var uvs = dm.parameters(resolution);
-            DA.SetData(0, mesh.Getmesh);
-         
+            var mesh = dm.MeshTopology();
+            var uvs = dm.Parameters();
             var msh = mesh.Getmesh;
             var pts = new List<Point3d>();
-            var sP = new SurfacePatch();
+            var sP = new SurfacePatch(dm, pm, bm);
+
             for (int i = 0; i < uvs.Count; i++)
             {
                 //pts.Add(new Point3d(uvs[i].X, uvs[i].Y, 0));
-                Point3d katoout = sP.Kato_Suv(uvs[i].X, uvs[i].Y, curves_);
+                Point3d katoout = sP.Kato_Suv(uvs[i].X, uvs[i].Y);
                 pts.Add(katoout);
             }
 
+            //var sd = dm.Bounds;
             msh.Vertices.AddVertices(pts);
+            msh.VertexColors.SetColors(Enumerable.Repeat(System.Drawing.Color.Silver, pts.Count).ToArray());
+            DA.SetData(0, mesh.Getmesh);
+            DA.SetDataList(2, dm.Vertices);
 
         }
 
