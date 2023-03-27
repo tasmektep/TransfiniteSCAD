@@ -13,7 +13,7 @@ namespace SCAD
     class Ribbon
     {
         protected NurbsCurve curve_;
-        protected Ribbon prev_, next_;
+        public Ribbon prev_, next_;
         protected RMF rmf_;
         protected Vector3d normal_fence_ = new Vector3d();
         protected Vector3d handler_;

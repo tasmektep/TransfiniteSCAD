@@ -24,12 +24,14 @@ namespace SCAD
             return list[(index + list.Count - 1) % list.Count];
         }
 
-         public static void Create(this NurbsCurve @this, IEnumerable<Vector3d> points, bool periodic =false, int degree = -1)
-         {
-            if(degree == -1)
-             return NurbsCurve.Create(periodic, points.Count-1,points);
-            else 
-         }
+        public static NurbsCurve Create(this NurbsCurve @this, IEnumerable<Point3d> points, bool periodic = false, int degree = -1)
+        {
+            if (degree == -1)
+                return NurbsCurve.Create(periodic, points.Count() - 1, points);
+            else
+                return NurbsCurve.Create(periodic, degree, points);
+
+        }
     }
 
 
