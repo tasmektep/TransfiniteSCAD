@@ -180,7 +180,7 @@ namespace SCAD
             {
                 //int j = (i + 1) % curves_.Count;
                 //vertices_[i] = new Point2d(Math.Cos(alpha * i), Math.Sin(alpha * i));
-
+                
                 vertices_[i] = new Point2d(curves_[i % curves_.Count].PointAtStart.X, curves_[i % curves_.Count].PointAtStart.Y);
 
             }

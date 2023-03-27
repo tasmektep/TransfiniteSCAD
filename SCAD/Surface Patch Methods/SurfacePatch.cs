@@ -14,14 +14,16 @@ namespace SCAD
         Domain dm;
         Parametrization prm;
         Blending_Method blending_method;
-
+        public List<Point3d> centers = new List<Point3d>();
+        public List<Vector3d> vectors = new List<Vector3d>();
+        public List<Plane> planes = new List<Plane>();
         /// Isocurve Mean value
 
 
-        public SurfacePatch(Domain dm, Parametrization_Method method , Blending_Method blending_method = Blending_Method.Special_Side_Blending )
+        public SurfacePatch(Domain dm, Parametrization_Method method, Blending_Method blending_method = Blending_Method.Special_Side_Blending)
         {
             this.dm = dm;
-            this.blending_method = blending_method; 
+            this.blending_method = blending_method;
             if (method == Parametrization_Method.RadialDistanceFunction)
                 prm = new Parametrization(method, dm);
             else if (method == Parametrization_Method.Harmonic_Pt)
@@ -51,12 +53,16 @@ namespace SCAD
             Point3d r_sum = new Point3d();
             for (int i = 0; i < curves.Count; i++)
             {
+                Plane VecPlane = new Plane();
                 double s = curves[i].Domain.Min + si[i] * (curves[i].Domain.Max - curves[i].Domain.Min);
                 Vector3d crossproduct = Vector3d.CrossProduct(curves[i].TangentAt(s), curves[i].CurvatureAt(s));
-
-                Vector3d T = crossproduct; // Ribbon vector
+                curves[i].PerpendicularFrameAt(s, out VecPlane);
+                //Vector3d T = -crossproduct; // Ribbon vector
+                Vector3d T = VecPlane.XAxis; // Ribbon vector
+                planes.Add(VecPlane);
                 Point3d r = curves[i].PointAt(s) + (di[i] * T);
-
+                vectors.Add(T);
+                centers.Add(r);
                 r_sum += r * Value[i];
             }
 

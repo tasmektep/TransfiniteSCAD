@@ -32,22 +32,22 @@ namespace SCAD
         const int resolution_ = 100;
 
         NurbsCurve curve_ = new NurbsCurve(3, 4);
-        void setCurve(NurbsCurve c)
+        public void setCurve(NurbsCurve c)
         {
             curve_ = c;
         }
 
-        void setStart(Vector3d start)
+        public void setStart(Vector3d start)
         {
             start_ = start;
         }
 
-        void setEnd(Vector3d end)
+        public void setEnd(Vector3d end)
         {
             end_ = end;
         }
 
-        void update()
+        public void update()
         {
             // As described in `Computation of Rotation Minimizing Frames', Wang et al., 2008.
             // A limitation of this method is that it is determined by the starting frame
@@ -74,12 +74,12 @@ namespace SCAD
             angleCorrection_ /= f.s;
         }
 
-        Vector3d eval(double u)
+        public Vector3d eval(double u)
         {
             int i = frames_.FindIndex(x => x.u >= u);
             if (u < frames_[i].u)
                 return frames_[i].n;
-            Frame f = nextFrame(frames_[i-1], u);
+            Frame f = nextFrame(frames_[i - 1], u);
             rotateFrame(f, f.s * angleCorrection_);
             return f.n;
         }

@@ -36,7 +36,8 @@ namespace SCAD
             pManager.AddMeshParameter("Model", "M", "Mesh Model", GH_ParamAccess.item);
             pManager.AddCurveParameter("Domain C", "D", "Domain curves", GH_ParamAccess.list);
             pManager.AddPointParameter("Domain V", "Dv", "Domain vertices", GH_ParamAccess.list);
-
+            pManager.AddMeshParameter("Domain Mesh", "Dm", "Domain Mesh Model", GH_ParamAccess.item);
+            pManager.AddPlaneParameter("Ribbon Vector", "Rv", "Ribbon vectors", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -46,7 +47,7 @@ namespace SCAD
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             List<Curve> curves_ = new List<Curve>();
-            int p =0, b = 0;
+            int p = 0, b = 0;
             DA.GetDataList(0, curves_);
             DA.GetData(1, ref p);
             DA.GetData(2, ref b);
@@ -57,25 +58,34 @@ namespace SCAD
             Domain dm = new Domain(resolution);
             dm.SetSides(curves_);
             dm.Update();
-
+            
             var mesh = dm.MeshTopology();
             var uvs = dm.Parameters();
             var msh = mesh.Getmesh;
             var pts = new List<Point3d>();
+            var ptsDomain = new List<Point3d>();
             var sP = new SurfacePatch(dm, pm, bm);
-
+            var domainMesh = msh.DuplicateMesh();
             for (int i = 0; i < uvs.Count; i++)
             {
-                //pts.Add(new Point3d(uvs[i].X, uvs[i].Y, 0));
+                ptsDomain.Add(new Point3d(uvs[i].X, uvs[i].Y, 0));
                 Point3d katoout = sP.Kato_Suv(uvs[i].X, uvs[i].Y);
                 pts.Add(katoout);
             }
+            //List<Line> lines = new List<Line>();
+            //for (int i = 0; i < sP.vectors.Count; i++)
+            //{
+            //    lines.Add(new Line(sP.centers[i], sP.vectors[i]));
+            //}
 
             //var sd = dm.Bounds;
             msh.Vertices.AddVertices(pts);
+            domainMesh.Vertices.AddVertices(ptsDomain);
             msh.VertexColors.SetColors(Enumerable.Repeat(System.Drawing.Color.Silver, pts.Count).ToArray());
-            DA.SetData(0, mesh.Getmesh);
+            DA.SetData(0, msh);
             DA.SetDataList(2, dm.Vertices);
+            DA.SetData(3, domainMesh);
+            DA.SetDataList(4, sP.planes);
 
         }
 

@@ -23,7 +23,15 @@ namespace SCAD
         {
             return list[(index + list.Count - 1) % list.Count];
         }
+
+         public static void Create(this NurbsCurve @this, IEnumerable<Vector3d> points, bool periodic =false, int degree = -1)
+         {
+            if(degree == -1)
+             return NurbsCurve.Create(periodic, points.Count-1,points);
+            else 
+         }
     }
+
 
     public class TriMesh
     {
