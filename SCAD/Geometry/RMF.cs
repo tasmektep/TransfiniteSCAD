@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Rhino.Geometry;
 namespace SCAD
 {
-    class RMF
+    public class RMF
     {
         const double epsilon = 1.0e-8;
 
@@ -76,7 +76,10 @@ namespace SCAD
 
         public Vector3d eval(double u)
         {
-            int i = frames_.FindIndex(x => x.u >= u);
+
+            var ii = frames_.ToArray();
+            var i = ii.GetUpperBound(0);
+            //int i = frames_.FindIndex(x => x.u >= u);
             if (u < frames_[i].u)
                 return frames_[i].n;
             Frame f = nextFrame(frames_[i - 1], u);

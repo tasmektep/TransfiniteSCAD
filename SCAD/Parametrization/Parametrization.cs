@@ -35,7 +35,7 @@ namespace SCAD
         RadialDistanceFunction
     }
 
-    class Parametrization
+    public class Parametrization
     {
         public Parametrization_Method method = 0;
         public List<Curve> domainC = new List<Curve>();

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-
+using static SCAD.Extensions;
 namespace SCAD
 {
     class RibbonCoons : Ribbon
@@ -43,8 +43,21 @@ namespace SCAD
             tr_ = right_.PointAt(1.0);
             base.update();
         }
-        //      public virtual Vector3D crossDerivative(double s) const override;
-        //public virtual Point3D eval(const Point2D &sd) const override;
+        public override Vector3d crossDerivative(double s)
+        {
+            // TODO
+            return new Vector3d();
+        }
+        public override Point3d eval(Point2d sd)
+        {
+            double s = inrange(0, sd[0], 1), d = inrange(0, sd[1], 1),
+             s1 = inrange(0, 1 - s, 1), d1 = inrange(0, 1 - d, 1);
+            var p1 = curve_.PointAt(s) * d1 + top_.PointAt(s1) * d;
+            var p2 = left_.PointAt(d1) * s1 + right_.PointAt(d) * s;
+            var p12 = (bl_ * s1 + br_ * s) * d1 + (tl_ * s1 + tr_ * s) * d;
+            var vec = p1 + p2 - p12;
+            return new Point3d(vec.X, vec.Y, vec.Z);
+        }
 
 
     }

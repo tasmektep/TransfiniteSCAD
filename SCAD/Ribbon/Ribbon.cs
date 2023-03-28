@@ -10,11 +10,11 @@ using System.Windows.Media.Media3D;
 
 namespace SCAD
 {
-    class Ribbon
+    public class Ribbon
     {
         protected NurbsCurve curve_;
         public Ribbon prev_, next_;
-        protected RMF rmf_;
+        protected RMF rmf_ = new RMF();
         protected Vector3d normal_fence_ = new Vector3d();
         protected Vector3d handler_;
         protected double multiplier_;
@@ -93,7 +93,7 @@ namespace SCAD
         }
 
         public virtual Vector3d crossDerivative(double s)
-        { return new  Vector3d(); }
+        { return new Vector3d(); }
         public virtual Point3d eval(Point2d sd)
         {
             return curve_.PointAt(sd[0]) + crossDerivative(sd[0]) * sd[1];

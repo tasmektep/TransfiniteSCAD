@@ -9,6 +9,22 @@ namespace SCAD
 {
     public static class Extensions
     {
+
+        public static void Reparameterize(this NurbsCurve curve)
+        {
+            Interval I = new Interval(0, 1);
+            curve.Domain = I;
+
+        }
+        public static double inrange(double min, double x, double max)
+        {
+            if (x < min)
+                return min;
+            if (x > max)
+                return max;
+            return x;
+        }
+
         public static int IndexWrapper(int index, int list_count)
         {
             return ((index % list_count) + list_count) % list_count;
@@ -34,6 +50,21 @@ namespace SCAD
         }
     }
 
+    public static class Utilities
+    {
+        public static double hermite(int i, double t)
+        {
+            switch (i)
+            {
+                case 0: return Math.Pow(1 - t, 3) + 3.0 * Math.Pow(1 - t, 2) * t;
+                case 1: return Math.Pow(1 - t, 2) * t;
+                case 2: return (1 - t) * Math.Pow(t, 2);
+                case 3: return 3.0 * (1 - t) * Math.Pow(t, 2) + Math.Pow(t, 3);
+            }
+            return -1.0;                  // should not come here
+        }
+
+    }
 
     public class TriMesh
     {
@@ -45,6 +76,11 @@ namespace SCAD
         public void resizePoints(int n) { m_vertices = new List<Point3d>(n); }
 
         public TriMesh() { mesh = new Mesh(); }
+
+        public void setPoints(List<Point3d> pts)
+        {
+            mesh.Vertices.AddVertices(pts);
+        }
 
         public void addTriangle(int vt_1, int vt_2, int vt_3) { this.mesh.Faces.AddFace(vt_1, vt_2, vt_3); }
         public int meshSize(int resolution)
@@ -76,7 +112,7 @@ namespace SCAD
 
     public static class ListExtension
     {
-        public static void resize<T>(this List<T> list, int sz, T c)
+        private static void resize<T>(this List<T> list, int sz, T c)
         {
             int cur = list.Count;
             if (sz < cur)
@@ -93,5 +129,6 @@ namespace SCAD
             resize(list, sz, new T());
         }
     }
-
 }
+
+

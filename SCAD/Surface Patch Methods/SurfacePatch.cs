@@ -17,10 +17,11 @@ namespace SCAD
         public List<Point3d> centers = new List<Point3d>();
         public List<Vector3d> vectors = new List<Vector3d>();
         public List<Plane> planes = new List<Plane>();
+        public List<Ribbon> ribbons = new List<Ribbon>();
         /// Isocurve Mean value
 
 
-        public SurfacePatch(Domain dm, Parametrization_Method method, Blending_Method blending_method = Blending_Method.Special_Side_Blending)
+        public SurfacePatch(Domain dm, List<Ribbon> ribbons, Parametrization_Method method, Blending_Method blending_method = Blending_Method.Special_Side_Blending)
         {
             this.dm = dm;
             this.blending_method = blending_method;
@@ -28,6 +29,7 @@ namespace SCAD
                 prm = new Parametrization(method, dm);
             else if (method == Parametrization_Method.Harmonic_Pt)
                 prm = new Parametrization(Parametrization_Method.Harmonic_Pt, dm);
+            this.ribbons = ribbons;
         }
 
         /// <summary>
@@ -50,6 +52,8 @@ namespace SCAD
             BlendingFunctions blending = new BlendingFunctions(blending_method);
             List<double> Value = blending.GetBlending(di);
 
+
+         
             Point3d r_sum = new Point3d();
             for (int i = 0; i < curves.Count; i++)
             {
@@ -58,16 +62,18 @@ namespace SCAD
                 Vector3d crossproduct = Vector3d.CrossProduct(curves[i].TangentAt(s), curves[i].CurvatureAt(s));
                 curves[i].PerpendicularFrameAt(s, out VecPlane);
                 //Vector3d T = -crossproduct; // Ribbon vector
-                Vector3d T = VecPlane.XAxis; // Ribbon vector
+                //Vector3d T = VecPlane.XAxis; // Ribbon vector
+                Vector3d T = ((Vector3d)ribbons[i].eval(new Point2d(si[i], di[i]))); // Ribbon vector
+               
                 planes.Add(VecPlane);
                 Point3d r = curves[i].PointAt(s) + (di[i] * T);
                 vectors.Add(T);
                 centers.Add(r);
+
                 r_sum += r * Value[i];
             }
 
             return r_sum;
         }
-
     }
 }

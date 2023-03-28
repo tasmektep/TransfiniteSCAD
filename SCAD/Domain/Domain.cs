@@ -10,16 +10,16 @@ namespace SCAD
     public class Domain
     {
 
-        int n_;
-        double M_PI = Math.PI;
+        protected int n_;
+        protected double M_PI = Math.PI;
         const double epsilon = 1.0e-8;
-        Point2d center_;
+        protected Point2d center_;
 
-        List<Curve> curves_;
+        protected List<Curve> curves_ = new List<Curve>();
         int resolution;
         List<Point2d> parameters_ = new List<Point2d>();
-        List<Point2d> vertices_ = new List<Point2d>();
-        List<Vector2d> du_ = new List<Vector2d>(), dv_ = new List<Vector2d>();
+        protected List<Point2d> vertices_ = new List<Point2d>();
+        protected List<Vector2d> du_ = new List<Vector2d>(), dv_ = new List<Vector2d>();
 
         private List<Curve> m_BndCurves;
         private List<Curve> m_DomainCurves;
@@ -30,11 +30,16 @@ namespace SCAD
         /// </summary>
         /// <param name="BndCurves"> Boundary Curves </param>
         /// <param name="DomainCurves"> Domain Curves </param>
-        public Domain(List<Curve> BndCurves, out List<Curve> DomainCurves)
+        //public Domain(List<Curve> BndCurves, out List<Curve> DomainCurves)
+        //{
+        //    m_BndCurves = BndCurves;
+        //    ComputeDomainPolygon();
+        //    DomainCurves = m_DomainCurves;
+        //}
+
+        public Domain()
         {
-            m_BndCurves = BndCurves;
-            ComputeDomainPolygon();
-            DomainCurves = m_DomainCurves;
+
         }
 
         private void ComputeDomainPolygon()
@@ -142,11 +147,14 @@ namespace SCAD
             curves_[i] = curve;
         }
 
-        public void SetSides(List<Curve> curves) { curves_ = curves; }
+        public void SetSides(List<Curve> curves)
+        {
+            curves_ = curves;
+        }
 
         // Computes everything from vertices
         // except for parameters, which are computed only when needed
-        private bool update()
+        public virtual bool update()
         {
             n_ = vertices_.Count();
             ComputeCenter();
@@ -161,33 +169,6 @@ namespace SCAD
             }
             return true;
         }
-
-        public bool Update()
-        {
-            int m = curves_.Count();
-            if (n_ == m)
-                return false;
-
-            if (m == 4)
-            {
-                vertices_ = new List<Point2d>() { new Point2d(1, 1), new Point2d(-1, 1), new Point2d(-1, -1), new Point2d(1, -1) };
-                return update();
-            }
-
-            double alpha = 2.0 * M_PI / m;
-            vertices_.resize(m);
-            for (int i = 0; i < m; ++i)
-            {
-                //int j = (i + 1) % curves_.Count;
-                //vertices_[i] = new Point2d(Math.Cos(alpha * i), Math.Sin(alpha * i));
-                
-                vertices_[i] = new Point2d(curves_[i % curves_.Count].PointAtStart.X, curves_[i % curves_.Count].PointAtStart.Y);
-
-            }
-
-            return update();
-        }
-
 
         public Point2d ToLocal(int i, Vector2d v)
         {
@@ -229,15 +210,85 @@ namespace SCAD
             return 1 + n_ * resolution * (resolution + 1) / 2;
         }
 
-        public List<Point2d> Parameters()
+        public virtual int MeshSize(int resolution)
         {
-            int size = MeshSize();
+            if (n_ == 3)
+                return (resolution + 1) * (resolution + 2) / 2;
+            if (n_ == 4)
+                return (resolution + 1) * (resolution + 1);
+            return 1 + n_ * resolution * (resolution + 1) / 2;
+        }
+
+        //public List<Point2d> Parameters()
+        //{
+        //    int size = MeshSize();
+        //    if (parameters_.Count() == size)
+        //        return parameters_;
+        //    parameters_ = ParametersImpl();
+        //    return parameters_;
+        //}
+
+        public List<Point2d> Parameters(int resolution)
+        {
+            int size = MeshSize(resolution);
             if (parameters_.Count() == size)
                 return parameters_;
-            parameters_ = ParametersImpl();
+            parameters_ = ParametersImpl(resolution);
             return parameters_;
         }
-        protected virtual List<Point2d> ParametersImpl()
+
+        //protected virtual List<Point2d> ParametersImpl()
+        //{
+        //    List<Point2d> parameters = new List<Point2d>(MeshSize());
+
+        //    if (n_ == 3)
+        //    {
+        //        for (int j = 0; j <= resolution; ++j)
+        //        {
+        //            double u = (double)j / resolution;
+        //            var p = vertices_[0] * u + vertices_[2] * (1 - u);
+        //            var q = vertices_[1] * u + vertices_[2] * (1 - u);
+        //            for (int k = 0; k <= j; ++k)
+        //            {
+        //                double v = j == 0 ? 1.0 : (double)k / j;
+        //                parameters.Add(p * (1 - v) + q * v);
+        //            }
+        //        }
+        //    }
+        //    else if (n_ == 4)
+        //    {
+        //        for (int j = 0; j <= resolution; ++j)
+        //        {
+        //            double u = (double)j / resolution;
+        //            var p = vertices_[0] * (1 - u) + vertices_[1] * u;
+        //            var q = vertices_[3] * (1 - u) + vertices_[2] * u;
+        //            for (int k = 0; k <= resolution; ++k)
+        //            {
+        //                double v = (double)k / resolution;
+        //                parameters.Add(p * (1 - v) + q * v);
+        //            }
+        //        }
+        //    }
+        //    else
+        //    { // n_ > 4
+        //        parameters.Add(center_);
+        //        for (int j = 1; j <= resolution; ++j)
+        //        {
+        //            double u = (double)j / (double)resolution;
+        //            for (int k = 0; k < n_; ++k)
+        //                for (int i = 0; i < j; ++i)
+        //                {
+        //                    double v = (double)i / (double)j;
+        //                    Point2d ep = vertices_.Prev(k) * (1.0 - v) + vertices_[k] * v;
+        //                    Point2d p = center_ * (1.0 - u) + ep * u;
+        //                    parameters.Add(p);
+        //                }
+        //        }
+        //    }
+        //    return parameters;
+        //}
+
+        protected virtual List<Point2d> ParametersImpl(int resolution)
         {
             List<Point2d> parameters = new List<Point2d>(MeshSize());
 
@@ -310,7 +361,64 @@ namespace SCAD
             return index >= MeshSize() - n_ * resolution;
         }
 
-        public virtual TriMesh MeshTopology()
+        //public virtual TriMesh MeshTopology()
+        //{
+        //    TriMesh mesh = new TriMesh();
+        //    mesh.resizePoints(MeshSize());
+
+        //    if (n_ == 3)
+        //    {
+        //        int prev = 0, current = 1;
+        //        for (int i = 0; i < resolution; ++i)
+        //        {
+        //            for (int j = 0; j < i; ++j)
+        //            {
+        //                mesh.addTriangle(current + j, current + j + 1, prev + j);
+        //                mesh.addTriangle(current + j + 1, prev + j + 1, prev + j);
+        //            }
+        //            mesh.addTriangle(current + i, current + i + 1, prev + i);
+        //            prev = current;
+        //            current += i + 2;
+        //        }
+        //    }
+        //    else if (n_ == 4)
+        //    {
+        //        for (int i = 0; i < resolution; ++i)
+        //            for (int j = 0; j < resolution; ++j)
+        //            {
+        //                int index = i * (resolution + 1) + j;
+        //                mesh.addTriangle(index, index + resolution + 1, index + 1);
+        //                mesh.addTriangle(index + 1, index + resolution + 1, index + resolution + 2);
+        //            }
+        //    }
+        //    else
+        //    { // n_ > 4
+        //        int inner_start = 0, outer_vert = 1;
+        //        for (int layer = 1; layer <= resolution; ++layer)
+        //        {
+        //            int inner_vert = inner_start, outer_start = outer_vert;
+        //            for (int side = 0; side < n_; ++side)
+        //            {
+        //                int vert = 0;
+        //                while (true)
+        //                {
+        //                    int next_vert = (side == n_ - 1 && vert == layer - 1) ? outer_start : (outer_vert + 1);
+        //                    mesh.addTriangle(inner_vert, outer_vert, next_vert);
+        //                    ++outer_vert;
+        //                    if (++vert == layer)
+        //                        break;
+        //                    int inner_next = (side == n_ - 1 && vert == layer - 1) ? inner_start : (inner_vert + 1);
+        //                    mesh.addTriangle(inner_vert, next_vert, inner_next);
+        //                    inner_vert = inner_next;
+        //                }
+        //            }
+        //            inner_start = outer_start;
+        //        }
+        //    }
+        //    return mesh;
+        //}
+
+        public virtual TriMesh MeshTopology(int resolution)
         {
             TriMesh mesh = new TriMesh();
             mesh.resizePoints(MeshSize());
@@ -366,8 +474,6 @@ namespace SCAD
             }
             return mesh;
         }
-
-
         public virtual Point2d edgePoint(int i, double s)
         {
             return vertices_[i] * s + vertices_.Prev(i) * (1.0 - s);
@@ -385,7 +491,7 @@ namespace SCAD
             return Math.Acos(Inrange(-1, v1.Length * v2.Length, 1));
         }
 
-        virtual protected void ComputeCenter()
+        protected virtual void ComputeCenter()
         {
             List<double> lengths = new List<double>(n_);
             for (int i = 0; i < n_; ++i)
@@ -394,8 +500,8 @@ namespace SCAD
             for (int i = 0; i < n_; ++i)
                 center_ += vertices_[i] * (lengths[i] + lengths.Next(i));
             center_ /= lengths.Sum() * 2; ;
-
         }
+
         double Inrange(double min, double x, double max)
         {
             if (x < min)

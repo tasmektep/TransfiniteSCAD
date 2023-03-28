@@ -38,6 +38,8 @@ namespace SCAD
             pManager.AddPointParameter("Domain V", "Dv", "Domain vertices", GH_ParamAccess.list);
             pManager.AddMeshParameter("Domain Mesh", "Dm", "Domain Mesh Model", GH_ParamAccess.item);
             pManager.AddPlaneParameter("Ribbon Vector", "Rv", "Ribbon vectors", GH_ParamAccess.list);
+            pManager.AddPointParameter("Ribbon center", "Rc", "Ribbon center", GH_ParamAccess.list);
+            pManager.AddVectorParameter("Ribbon Vector", "Rv", "Ribbon vectors", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -55,16 +57,26 @@ namespace SCAD
             var pm = (Parametrization_Method)p;
             var bm = (Blending_Method)b;
             int resolution = 30;
-            Domain dm = new Domain(resolution);
+            DomainRegular dm = new DomainRegular();
             dm.SetSides(curves_);
-            dm.Update();
-            
-            var mesh = dm.MeshTopology();
-            var uvs = dm.Parameters();
+            dm.update();
+
+
+            var surf = new SCAD.Surface<DomainRegular, Parametrization, RibbonCompatible>();
+            double scaling = 20.0;
+            double ribbon_length = 0.25;
+
+
+            surf.setCurves(curves_);
+            surf.setupLoop();
+            surf.update();
+
+            var mesh = dm.MeshTopology(resolution);
+            var uvs = dm.Parameters(resolution);
             var msh = mesh.Getmesh;
             var pts = new List<Point3d>();
             var ptsDomain = new List<Point3d>();
-            var sP = new SurfacePatch(dm, pm, bm);
+            var sP = new SurfacePatch(dm, surf.GetRibbons, pm, bm);
             var domainMesh = msh.DuplicateMesh();
             for (int i = 0; i < uvs.Count; i++)
             {
@@ -86,6 +98,8 @@ namespace SCAD
             DA.SetDataList(2, dm.Vertices);
             DA.SetData(3, domainMesh);
             DA.SetDataList(4, sP.planes);
+            DA.SetDataList(5, sP.centers);
+            DA.SetDataList(6, sP.vectors);
 
         }
 
