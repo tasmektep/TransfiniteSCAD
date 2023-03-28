@@ -56,7 +56,7 @@ namespace SCAD
 
             var pm = (Parametrization_Method)p;
             var bm = (Blending_Method)b;
-            int resolution = 30;
+            int resolution = 10;
             DomainRegular dm = new DomainRegular();
             dm.SetSides(curves_);
             dm.update();
