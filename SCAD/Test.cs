@@ -84,6 +84,23 @@ namespace SCAD
                 Point3d katoout = sP.Kato_Suv(uvs[i].X, uvs[i].Y);
                 pts.Add(katoout);
             }
+
+            List<Vector3d> vecList = new List<Vector3d>();
+            List<Point3d> ptList = new List<Point3d>();
+            for (int i = 0; i < surf.n; ++i)
+            {
+                for (int j = 0; j <= resolution; ++j)
+                {
+                    double u = (double)j / resolution;
+                    ptList.Add(surf.ribbon(i).curve().PointAt(u));
+                    vecList.Add((Vector3d)surf.ribbon(i).eval(new Point2d(u, ribbon_length)));
+                }
+            }
+
+           
+
+
+
             //List<Line> lines = new List<Line>();
             //for (int i = 0; i < sP.vectors.Count; i++)
             //{
@@ -98,8 +115,8 @@ namespace SCAD
             DA.SetDataList(2, dm.Vertices);
             DA.SetData(3, domainMesh);
             DA.SetDataList(4, sP.planes);
-            DA.SetDataList(5, sP.centers);
-            DA.SetDataList(6, sP.vectors);
+            //DA.SetDataList(5, ptList);
+            //DA.SetDataList(6, vecList);
 
         }
 

@@ -201,14 +201,14 @@ namespace SCAD
         }
 
 
-        public virtual int MeshSize()
-        {
-            if (n_ == 3)
-                return (resolution + 1) * (resolution + 2) / 2;
-            if (n_ == 4)
-                return (resolution + 1) * (resolution + 1);
-            return 1 + n_ * resolution * (resolution + 1) / 2;
-        }
+        //public virtual int MeshSize()
+        //{
+        //    if (n_ == 3)
+        //        return (resolution + 1) * (resolution + 2) / 2;
+        //    if (n_ == 4)
+        //        return (resolution + 1) * (resolution + 1);
+        //    return 1 + n_ * resolution * (resolution + 1) / 2;
+        //}
 
         public virtual int MeshSize(int resolution)
         {
@@ -290,7 +290,7 @@ namespace SCAD
 
         protected virtual List<Point2d> ParametersImpl(int resolution)
         {
-            List<Point2d> parameters = new List<Point2d>(MeshSize());
+            List<Point2d> parameters = new List<Point2d>(MeshSize(resolution));
 
             if (n_ == 3)
             {
@@ -343,7 +343,7 @@ namespace SCAD
         {
             if (n_ == 3)
             {
-                if (index >= MeshSize() - resolution - 1)
+                if (index >= MeshSize(resolution) - resolution - 1)
                     return true;
                 bool issquare(int n_)
                 {
@@ -358,7 +358,7 @@ namespace SCAD
                 return index <= resolution || index >= (resolution + 1) * resolution ||
                   index % (resolution + 1) == 0 || index % (resolution + 1) == resolution;
             }
-            return index >= MeshSize() - n_ * resolution;
+            return index >= MeshSize(resolution) - n_ * resolution;
         }
 
         //public virtual TriMesh MeshTopology()
@@ -421,7 +421,7 @@ namespace SCAD
         public virtual TriMesh MeshTopology(int resolution)
         {
             TriMesh mesh = new TriMesh();
-            mesh.resizePoints(MeshSize());
+            mesh.resizePoints(MeshSize(resolution));
 
             if (n_ == 3)
             {

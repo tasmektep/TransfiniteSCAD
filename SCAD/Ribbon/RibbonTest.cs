@@ -33,7 +33,8 @@ namespace SCAD
         {
             pManager.AddMeshParameter("Model", "M1", "Mesh Model", GH_ParamAccess.item);
             pManager.AddMeshParameter("Model", "M2", "Mesh Model", GH_ParamAccess.item);
-
+            pManager.AddPointParameter("Ribbon center", "Rc", "Ribbon center", GH_ParamAccess.list);
+            pManager.AddVectorParameter("Ribbon Vector", "Rv", "Ribbon vectors", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -46,7 +47,8 @@ namespace SCAD
             int resolution = 10;
             double scaling = 20.0;
             double ribbon_length = 0.25;
-            TriMesh fence_mesh = new TriMesh();
+
+
 
             List<Curve> curves_ = new List<Curve>();
             DA.GetDataList(0, curves_);
@@ -56,10 +58,12 @@ namespace SCAD
             surf.update();
 
             int n = surf.domain().Size;
+            //n = 1;
             int size = n * resolution * 2;
             List<Point3d> pv = new List<Point3d>(); pv.Capacity = size;
-
-            for(int i = 0; i < n; ++i) {
+            #region Fence
+            TriMesh fence_mesh = new TriMesh();
+            for (int i = 0; i < n; ++i) {
                 for (int j = 0; j < resolution; ++j)
                 {
                     double u = (double)j / resolution;
@@ -82,12 +86,14 @@ namespace SCAD
             fence_mesh.addTriangle(index, index + 1, 0);
             fence_mesh.addTriangle(index + 1, 1, 0);
             //fence_mesh.writeOBJ("../../models/" + filename + "-fence.obj");
+            #endregion
 
-
-            
+            #region Ribbons
             // Ribbons
             TriMesh ribbon_mesh = new TriMesh();
             pv.Clear(); pv.Capacity = (n * (resolution + 1) * 2);
+            List<Vector3d> vecList = new List<Vector3d>();
+            List<Point3d> ptList = new List<Point3d>();
             for (int i = 0; i < n; ++i)
             {
                 for (int j = 0; j <= resolution; ++j)
@@ -95,6 +101,12 @@ namespace SCAD
                     double u = (double)j / resolution;
                     pv.Add(surf.ribbon(i).curve().PointAt(u));
                     pv.Add(surf.ribbon(i).eval(new Point2d(u, ribbon_length)));
+                    var pt = surf.ribbon(i).curve().PointAt(u);
+                    ptList.Add(pt);
+
+                    var vec = surf.ribbon(i).eval(new Point2d(u, ribbon_length)) - pt;
+                    //vec.Unitize();
+                    vecList.Add(vec);
                 }
             }
             ribbon_mesh.setPoints(pv);
@@ -111,8 +123,11 @@ namespace SCAD
                 index += 2;
             }
             //ribbon_mesh.writeOBJ("../../models/" + filename + "-ribbons.obj");
+            #endregion
             DA.SetData(0, ribbon_mesh.Getmesh);
-            DA.SetData(1, fence_mesh.Getmesh);
+            DA.SetData(1, fence_mesh.Getmesh);    
+            DA.SetDataList(2, ptList);     
+            DA.SetDataList(3, vecList);
         }
 
         /// <summary>
