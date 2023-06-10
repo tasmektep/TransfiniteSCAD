@@ -27,10 +27,9 @@ namespace SCAD
             vertices_.resize(m);
             for (int i = 0; i < m; ++i)
             {
-                //int j = (i + 1) % curves_.Count;
-                //vertices_[i] = new Point2d(Math.Cos(alpha * i), Math.Sin(alpha * i));
+                int j = (i + 1) % curves_.Count;
+                vertices_[i] = new Point2d(Math.Cos(alpha * i), Math.Sin(alpha * i));
 
-                vertices_[i] = new Point2d(curves_[i % curves_.Count].PointAtStart.X, curves_[i % curves_.Count].PointAtStart.Y);
             }
             //vertices_[i] = Point2D(std::cos(alpha * i), std::sin(alpha * i));
 

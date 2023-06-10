@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
+using static SCAD.Domain;
 
 namespace SCAD
 {
@@ -24,6 +25,7 @@ namespace SCAD
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddCurveParameter("Curves", "C", "The bounding curves", GH_ParamAccess.list);
+            pManager.AddIntegerParameter("Domain Type", "D", "Domain Type", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Parametrization", "P", "Parametrization method", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Blending", "B", "Blending Method", GH_ParamAccess.item);
         }
@@ -49,23 +51,29 @@ namespace SCAD
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             List<Curve> curves_ = new List<Curve>();
-            int p = 0, b = 0;
+            int d = 0, p = 0, b = 0;
             DA.GetDataList(0, curves_);
-            DA.GetData(1, ref p);
-            DA.GetData(2, ref b);
+            DA.GetData(1, ref d);
+            DA.GetData(2, ref p);
+            DA.GetData(3, ref b);
 
+            var dm_e = (Domain_Method)d;
             var pm = (Parametrization_Method)p;
             var bm = (Blending_Method)b;
             int resolution = 10;
-            DomainRegular dm = new DomainRegular();
+            Domain dm = new Domain();
+
+            if (dm_e == Domain_Method.Domain_Regular)
+                dm = new DomainRegular();
+            else if (dm_e == Domain_Method.Domain_Concave)
+                dm = new DomainConcave();
+
             dm.SetSides(curves_);
             dm.update();
 
-
-            var surf = new SCAD.Surface<DomainRegular, Parametrization, RibbonCompatible>();
+            var surf = new SCAD.Surface<DomainConcave, Parametrization, RibbonCompatible>();
             double scaling = 20.0;
             double ribbon_length = 0.25;
-
 
             surf.setCurves(curves_);
             surf.setupLoop();
@@ -97,7 +105,7 @@ namespace SCAD
                 }
             }
 
-           
+
 
 
 

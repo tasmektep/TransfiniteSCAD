@@ -10,6 +10,7 @@ namespace SCAD
         /// <summary>
         /// Initializes a new instance of the DomainComponent class.
         /// </summary>
+        /// 
         public DomainComponent()
           : base("Domain", "Domain",
               "Description",
