@@ -1,17 +1,26 @@
 ﻿using Rhino.Geometry;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Rhino.Geometry;
-using System.Security.Cryptography;
-using System.Windows.Media.Media3D;
 
 namespace SCAD
 {
+    public enum Ribbon_Method
+    {
+        //
+        // Summary:
+        //      Uses Side Blending functions
+        Ribbon_Compatible = 0,
+        //
+        // Summary:
+        //      Uses Corner Blending functions
+        Ribbon_CompatiablewithHandler,
+        //
+        // Summary:
+        //      Uses Special Side Blending functions
+        Ribbon_Coons
+    }
+
     public class Ribbon
     {
+
         protected NurbsCurve curve_;
         public Ribbon prev_, next_;
         protected RMF rmf_ = new RMF();

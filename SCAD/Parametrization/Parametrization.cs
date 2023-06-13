@@ -45,6 +45,10 @@ namespace SCAD
         public List<HarmonicMap> HarmonicMapList_di = new List<HarmonicMap>();
         private Domain domain;
 
+
+        public Parametrization()
+        { }
+
         // Input    ::
 
         // Output   ::

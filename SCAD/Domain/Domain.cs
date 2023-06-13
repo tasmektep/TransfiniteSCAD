@@ -7,21 +7,26 @@ using Rhino.Geometry;
 
 namespace SCAD
 {
+    public enum Domain_Method
+    {
+        //
+        // Summary:
+        //     Domain Regular
+        Domain_Regular = 0,
+        //
+        // Summary:
+        //      Convex Domain
+        Domain_Concave,
+        //
+        // Summary:
+        //      Curfved Domain
+        Domain_Curved
+    }
+
+
     public class Domain
     {
-        public enum Domain_Method
-        {
-            //
-            // Summary:
-            //     Domain Regular
-            Domain_Regular = 0,
-            //
-            // Summary:
-            //      Convex Domain
-            Domain_Concave                    
-        }
-
-
+  
 
         protected int n_;
         protected double M_PI = Math.PI;

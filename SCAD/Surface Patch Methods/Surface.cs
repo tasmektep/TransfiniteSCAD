@@ -4,7 +4,9 @@ using SCAD;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Controls.Ribbon;
 using System.Windows.Media.Media3D;
+using static SCAD.Domain;
 using static SCAD.Extensions;
 using static SCAD.Utilities;
 
@@ -16,14 +18,45 @@ namespace SCAD
     //where P : Parametrization
     //where R : Ribbon     
     //: ISerializable, IEquatable<Point3d>, IComparable<Point3d>, IComparable, IEpsilonComparable<Point3d>, ICloneable, IValidable, IFormattable
-    public class Surface<D, P, R>
-        where D : Domain, new()
-        where P : Parametrization
-        where R : Ribbon, new()
+
+
+    public class Surface<R>
+    //where D : Domain, new()
+    //where P : Parametrization
+    where R : Ribbon, new()
     {
 
-        const double epsilon = 1.0e-8;
+        Domain domain_ = new Domain();
+        Parametrization P = new Parametrization();
+        //List<Ribbon> R = new List<Ribbon>();
 
+        protected int n_;
+        protected Parametrization param_ = default;
+        List<Ribbon> ribbons_ = new List<Ribbon>();
+
+        Parametrization_Method pm = new Parametrization_Method();
+        Blending_Method bm = new Blending_Method();
+
+        public Surface(Domain_Method dm, Parametrization_Method pm, Blending_Method bm)
+        {
+            SetDomain(dm);
+            this.pm = pm;
+            this.bm = bm;
+        }
+
+        private void SetDomain(Domain_Method dm)
+        {
+            if (dm == Domain_Method.Domain_Concave)
+                domain_ = new DomainConcave();
+            else if (dm == Domain_Method.Domain_Regular)
+                domain_ = new DomainRegular();
+            else if (dm == Domain_Method.Domain_Curved)
+                domain_ = new DomainCurved();
+        }
+     
+
+        const double epsilon = 1.0e-8;
+        private SurfacePatch sP = new SurfacePatch();
         public Surface() { n_ = 0; use_gamma_ = true; }
 
         public int n { get { return n_; } }
@@ -42,6 +75,23 @@ namespace SCAD
         //{
         //    return new Surface(srf);
         //}
+
+        public Domain GetDomain { get { return domain_; } }
+        public Parametrization GetParametrization { get { return P; } }
+
+
+        public TriMesh MeshTopology(int resolution)
+        {
+            var mesh = domain_.MeshTopology(resolution);
+            return mesh;
+        }
+
+        public List<Point2d> Parameters(int resolution)
+        {
+            var uvs = domain_.Parameters(resolution);
+            return uvs;
+        }
+
 
         public void setGamma(bool use_gamma)
         {
@@ -185,23 +235,43 @@ namespace SCAD
 
         public virtual Point3d eval(Point2d uv)
         {
-            return new Point3d();
+            Point3d katoout = sP.Kato_Suv(uv.X, uv.Y);
+            return katoout;
+            //return new Point3d();
         }
+        //public virtual Mesh eval(int resolution)
+        //{
+        //    TriMesh mesh = domain_.MeshTopology(resolution);
+        //    List<Point2d> uvs = domain_.Parameters(resolution);
+        //    List<Point3d> points = new List<Point3d>();
+        //    points.Capacity = uvs.Count;
+        //    foreach (var uv in uvs)
+        //    {
+        //        points.Add(eval(uv));
+        //    }
+        //    var msh = mesh.Getmesh;
+        //    msh.Vertices.AddVertices(points);
+        //    return msh;
+        //}
+
         public virtual Mesh eval(int resolution)
         {
             TriMesh mesh = domain_.MeshTopology(resolution);
             List<Point2d> uvs = domain_.Parameters(resolution);
             List<Point3d> points = new List<Point3d>();
             points.Capacity = uvs.Count;
+            sP = new SurfacePatch(domain_, GetRibbons, pm, bm);
+
             foreach (var uv in uvs)
             {
                 points.Add(eval(uv));
             }
             var msh = mesh.Getmesh;
             msh.Vertices.AddVertices(points);
+            P = sP.GetParametrization;
             return msh;
         }
-        protected virtual R newRibbon() { return new R(); }
+        protected virtual Ribbon newRibbon() { return new Ribbon(); }
 
 
         protected Point3d cornerCorrection(int i, double s1, double s2)
@@ -342,10 +412,7 @@ namespace SCAD
         protected int prev(int i, int j = 1) { return (i + n_ - j) % n_; }
 
 
-        protected int n_;
-        protected D domain_ = new D();
-        protected P param_ = default;
-        protected List<R> ribbons_ = new List<R>();
+
 
         public List<Ribbon> GetRibbons { get { return ribbons_.Select(x => (Ribbon)x).ToList(); } }
 

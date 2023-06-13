@@ -43,12 +43,10 @@ namespace SCAD
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            var surf = new SCAD.Surface<DomainRegular, Parametrization, RibbonCompatible>();
+            var surf = new SCAD.Surface<RibbonCompatible>(Domain_Method.Domain_Regular,Parametrization_Method.RadialDistanceFunction, Blending_Method.Special_Side_Blending);
             int resolution = 10;
             double scaling = 20.0;
-            double ribbon_length = 0.25;
-
-
+            double ribbon_length = 5;
 
             List<Curve> curves_ = new List<Curve>();
             DA.GetDataList(0, curves_);
@@ -85,7 +83,6 @@ namespace SCAD
             }
             fence_mesh.addTriangle(index, index + 1, 0);
             fence_mesh.addTriangle(index + 1, 1, 0);
-            //fence_mesh.writeOBJ("../../models/" + filename + "-fence.obj");
             #endregion
 
             #region Ribbons

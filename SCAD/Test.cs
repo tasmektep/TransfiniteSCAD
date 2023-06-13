@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Grasshopper;
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Data;
 using Rhino.Geometry;
 using static SCAD.Domain;
+using static SCAD.HarmonicClass;
 
 namespace SCAD
 {
@@ -41,7 +44,7 @@ namespace SCAD
             pManager.AddMeshParameter("Domain Mesh", "Dm", "Domain Mesh Model", GH_ParamAccess.item);
             pManager.AddPlaneParameter("Ribbon Vector", "Rv", "Ribbon vectors", GH_ParamAccess.list);
             pManager.AddPointParameter("Ribbon center", "Rc", "Ribbon center", GH_ParamAccess.list);
-            pManager.AddVectorParameter("Ribbon Vector", "Rv", "Ribbon vectors", GH_ParamAccess.list);
+            pManager.AddTextParameter("Ribbon Vector", "Rv", "Ribbon vectors", GH_ParamAccess.tree);
         }
 
         /// <summary>
@@ -51,6 +54,8 @@ namespace SCAD
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             List<Curve> curves_ = new List<Curve>();
+            var ptsDomain = new List<Point3d>();
+
             int d = 0, p = 0, b = 0;
             DA.GetDataList(0, curves_);
             DA.GetData(1, ref d);
@@ -61,53 +66,50 @@ namespace SCAD
             var pm = (Parametrization_Method)p;
             var bm = (Blending_Method)b;
             int resolution = 10;
-            Domain dm = new Domain();
+            #region
+            //Domain dm = new Domain();
 
-            if (dm_e == Domain_Method.Domain_Regular)
-                dm = new DomainRegular();
-            else if (dm_e == Domain_Method.Domain_Concave)
-                dm = new DomainConcave();
+            //if (dm_e == Domain_Method.Domain_Regular)
+            //    dm = new DomainRegular();
+            //else if (dm_e == Domain_Method.Domain_Concave)
+            //    dm = new DomainConcave();
 
-            dm.SetSides(curves_);
-            dm.update();
+            //dm.SetSides(curves_);
+            //dm.update();
+            #endregion
 
-            var surf = new SCAD.Surface<DomainConcave, Parametrization, RibbonCompatible>();
-            double scaling = 20.0;
-            double ribbon_length = 0.25;
+            var surf = new Surface<RibbonCompatible>(dm_e, pm, bm);
 
             surf.setCurves(curves_);
             surf.setupLoop();
             surf.update();
 
+            #region Visulize domain
+            var dm = surf.GetDomain;
             var mesh = dm.MeshTopology(resolution);
             var uvs = dm.Parameters(resolution);
-            var msh = mesh.Getmesh;
-            var pts = new List<Point3d>();
-            var ptsDomain = new List<Point3d>();
-            var sP = new SurfacePatch(dm, surf.GetRibbons, pm, bm);
-            var domainMesh = msh.DuplicateMesh();
+            var domainMesh = mesh.Getmesh.DuplicateMesh();
+            var msh = surf.eval(resolution);
             for (int i = 0; i < uvs.Count; i++)
-            {
                 ptsDomain.Add(new Point3d(uvs[i].X, uvs[i].Y, 0));
-                Point3d katoout = sP.Kato_Suv(uvs[i].X, uvs[i].Y);
-                pts.Add(katoout);
-            }
+            domainMesh.Vertices.AddVertices(ptsDomain);
+            #endregion
 
-            List<Vector3d> vecList = new List<Vector3d>();
-            List<Point3d> ptList = new List<Point3d>();
-            for (int i = 0; i < surf.n; ++i)
-            {
-                for (int j = 0; j <= resolution; ++j)
-                {
-                    double u = (double)j / resolution;
-                    ptList.Add(surf.ribbon(i).curve().PointAt(u));
-                    vecList.Add((Vector3d)surf.ribbon(i).eval(new Point2d(u, ribbon_length)));
-                }
-            }
-
-
-
-
+            #region
+            //var dm = surf.GetDomain;
+            //var mesh = dm.MeshTopology(resolution);
+            //var uvs = dm.Parameters(resolution);
+            //var msh = mesh.Getmesh;
+            //var pts = new List<Point3d>();
+            //var ptsDomain = new List<Point3d>();
+            //var sP = new SurfacePatch(dm, surf.GetRibbons, pm, bm);
+            //var domainMesh = msh.DuplicateMesh();
+            //for (int i = 0; i < uvs.Count; i++)
+            //{
+            //    ptsDomain.Add(new Point3d(uvs[i].X, uvs[i].Y, 0));
+            //    Point3d katoout = sP.Kato_Suv(uvs[i].X, uvs[i].Y);
+            //    pts.Add(katoout);
+            //}
 
             //List<Line> lines = new List<Line>();
             //for (int i = 0; i < sP.vectors.Count; i++)
@@ -116,16 +118,50 @@ namespace SCAD
             //}
 
             //var sd = dm.Bounds;
-            msh.Vertices.AddVertices(pts);
-            domainMesh.Vertices.AddVertices(ptsDomain);
-            msh.VertexColors.SetColors(Enumerable.Repeat(System.Drawing.Color.Silver, pts.Count).ToArray());
+            //msh.Vertices.AddVertices(pts);
+            //msh.VertexColors.SetColors(Enumerable.Repeat(System.Drawing.Color.Silver, pts.Count).ToArray());
+            #endregion
+
+            #region Harmonic map datatree contruction for visualization
+            ///
+            var par = surf.GetParametrization;
+            var pointss = domainMesh.Vertices.ToList();
+            DataTree<string> stringtree = new DataTree<string>();
+            for (int i = 0; i < par.HarmonicMapList_si.Count; i++)
+            {
+                stringtree.Add(writeroutput(par.HarmonicMapList_si[i],pointss), new GH_Path(new int[] { 0, i }));
+            }
+            for (int i = 0; i < par.HarmonicMapList_di.Count; i++)
+            {
+                stringtree.Add(writeroutput(par.HarmonicMapList_di[i],pointss), new GH_Path(new int[] { 1, i }));
+            }
+            ///
+            #endregion
+
             DA.SetData(0, msh);
             DA.SetDataList(2, dm.Vertices);
             DA.SetData(3, domainMesh);
-            DA.SetDataList(4, sP.planes);
-            //DA.SetDataList(5, ptList);
-            //DA.SetDataList(6, vecList);
+            //DA.SetDataList(4, sP.planes);
+            DA.SetDataList(5, pointss);
+            DA.SetDataTree(6, stringtree);
 
+        }
+
+        private string writeroutput(HarmonicMap map, List<Point3f> pointss)
+        {
+            string f = "";
+            for (int i = 0; i < pointss.Count; i++)
+            {
+                Point3d point2 = pointss[i];
+                var success = harmonic_eval(map, point2, out double result);
+                if (success)
+                {
+                    //f.Write("{0:N6},{0:N6},{0:N6}\n", u, v, result);
+                    f += (point2.X.ToString("N6") + "," + point2.Y.ToString("N6") + "," + result.ToString("N6") + '\n');
+                    //f.Write(u.ToString() + ',' + v.ToString() + ',' + result.ToString() + '\n');
+                }
+            }
+            return f;
         }
 
         /// <summary>

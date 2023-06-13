@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Grasshopper;
 using Rhino.Geometry;
+using Rhino.Input.Custom;
 using static SCAD.Extensions;
 
 namespace SCAD
@@ -20,7 +21,10 @@ namespace SCAD
         public List<Ribbon> ribbons = new List<Ribbon>();
         /// Isocurve Mean value
 
+        public SurfacePatch()
+        { }
 
+        public Parametrization GetParametrization { get {return prm; } }
         public SurfacePatch(Domain dm, List<Ribbon> ribbons, Parametrization_Method method, Blending_Method blending_method = Blending_Method.Special_Side_Blending)
         {
             this.dm = dm;
