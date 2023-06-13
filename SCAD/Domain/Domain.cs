@@ -18,7 +18,11 @@ namespace SCAD
             //
             // Summary:
             //      Convex Domain
-            Domain_Concave                    
+            Domain_Concave,
+            //
+            // Summary:
+            //      Convex Domain
+            Domain_Curved
         }
 
 
@@ -29,7 +33,7 @@ namespace SCAD
         protected Point2d center_;
 
         protected List<Curve> curves_ = new List<Curve>();
-        int resolution;
+        protected int resolution;
         List<Point2d> parameters_ = new List<Point2d>();
         protected List<Point2d> vertices_ = new List<Point2d>();
         protected List<Vector2d> du_ = new List<Vector2d>(), dv_ = new List<Vector2d>();

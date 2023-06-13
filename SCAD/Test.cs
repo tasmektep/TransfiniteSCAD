@@ -65,13 +65,13 @@ namespace SCAD
 
             if (dm_e == Domain_Method.Domain_Regular)
                 dm = new DomainRegular();
-            else if (dm_e == Domain_Method.Domain_Concave)
-                dm = new DomainConcave();
+            else if (dm_e == Domain_Method.Domain_Curved)
+                dm = new DomainCurved();
 
             dm.SetSides(curves_);
             dm.update();
 
-            var surf = new SCAD.Surface<DomainConcave, Parametrization, RibbonCompatible>();
+            var surf = new SCAD.Surface<DomainCurved, Parametrization, RibbonCompatible>();
             double scaling = 20.0;
             double ribbon_length = 0.25;
 
