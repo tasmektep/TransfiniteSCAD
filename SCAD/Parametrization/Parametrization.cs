@@ -166,12 +166,16 @@ namespace SCAD
                 i_before = IndexWrapper((i - 1), DomainPolygonHarmonic_main.Count);
                 int i_beforebefore = IndexWrapper((i - 2), DomainPolygonHarmonic_main.Count);
                 i_after = IndexWrapper((i + 1), DomainPolygonHarmonic_main.Count);
+                double[] minn = { Ix.Min, Iy.Min }, maxx = { Ix.Max, Iy.Max }; // domain polygon size
+                //double[] minn = { -7.25685, -100.042765 }, maxx = { 132.191, 142.896 }; // domain polygon size
 
+
+                int selected_curve = 999;
                 ///***********
                 ///harmonic map created for si -----------------------------------
                 ///***********
-                double[] min = { Ix.Min, Iy.Min }, max = { Ix.Max, Iy.Max }; // domain polygon size
-                //double[] min = { -8, -101 }, max = { 133, 143 }; // domain polygon size
+                //double[] min = { Ix.Min, Iy.Min }, max = { Ix.Max, Iy.Max }; // domain polygon size
+                double[] min = minn, max =maxx; // domain polygon size
                 HarmonicMap map_si;
                 int levels = 9;//???
                 map_si = harmonic_create(min, max, levels);
@@ -225,7 +229,7 @@ namespace SCAD
                 {
                     ///
                     ///middle point repeat, bunu hocanın örnek modeli yüzünden eklemiştim, 999 ise iptal etmişizdir.
-                    if (ii == 999)
+                    if (ii == selected_curve)
                     {
                         List<Point3d> idle = DomainPolygonHarmonic[ii].ToList();
                         for (int xx = 0; xx < idle.Count; xx++)
@@ -256,8 +260,8 @@ namespace SCAD
                 ///***********
                 ///harmonic map created for di -----------------------------------
                 ///***********
-                double[] min_di = { Ix.Min, Iy.Min }, max_di = { Ix.Max, Iy.Max };  // domain polygon size
-                //double[] min_di = { -8, -101 }, max_di = { 133, 143 }; // domain polygon size
+                //double[] min_di = { Ix.Min, Iy.Min }, max_di = { Ix.Max, Iy.Max };  // domain polygon size
+                double[] min_di = minn, max_di = maxx; // domain polygon size
                 HarmonicMap map_di;
                 int levels_di = 9;//???
                 map_di = harmonic_create(min_di, max_di, levels_di);
@@ -304,7 +308,7 @@ namespace SCAD
                 {
                     ///
                     ///middle point repeat
-                    if (ii == 2)
+                    if (ii == selected_curve)
                     {
                         List<Point3d> idle = DomainPolygonHarmonic[ii].ToList();
                         for (int xx = 0; xx < idle.Count; xx++)

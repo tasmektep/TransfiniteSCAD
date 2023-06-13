@@ -26,7 +26,7 @@ namespace SCAD
 
     public class Domain
     {
-  
+
 
         protected int n_;
         protected double M_PI = Math.PI;
@@ -115,13 +115,17 @@ namespace SCAD
 
         public (Interval bx, Interval by) Bounds
         {
+
             get
             {
-                var multiplayer = 1;
-                //Interval x = new Interval(vertices_.Min(pt => pt.X), vertices_.Max(pt => pt.X));
-                //Interval y = new Interval(vertices_.Min(pt => pt.Y), vertices_.Max(pt => pt.Y));
-                Interval x = new Interval(Math.Floor(vertices_.Min(pt => pt.X)) * multiplayer, Math.Ceiling(vertices_.Max(pt => pt.X)) * multiplayer);
-                Interval y = new Interval(Math.Floor(vertices_.Min(pt => pt.Y)) * multiplayer, Math.Ceiling(vertices_.Max(pt => pt.Y)) * multiplayer);
+                BoundingBox Bounds = new BoundingBox();
+                foreach (var curve_ in curves_)
+                {
+                    Bounds = BoundingBox.Union(Bounds, curve_.GetBoundingBox(true));
+                }
+                
+                Interval x = new Interval(Bounds.Min.X, Bounds.Max.X);
+                Interval y = new Interval(Bounds.Min.Y, Bounds.Max.Y);
                 return (x, y);
             }
         }
@@ -255,57 +259,6 @@ namespace SCAD
             return parameters_;
         }
 
-        //protected virtual List<Point2d> ParametersImpl()
-        //{
-        //    List<Point2d> parameters = new List<Point2d>(MeshSize());
-
-        //    if (n_ == 3)
-        //    {
-        //        for (int j = 0; j <= resolution; ++j)
-        //        {
-        //            double u = (double)j / resolution;
-        //            var p = vertices_[0] * u + vertices_[2] * (1 - u);
-        //            var q = vertices_[1] * u + vertices_[2] * (1 - u);
-        //            for (int k = 0; k <= j; ++k)
-        //            {
-        //                double v = j == 0 ? 1.0 : (double)k / j;
-        //                parameters.Add(p * (1 - v) + q * v);
-        //            }
-        //        }
-        //    }
-        //    else if (n_ == 4)
-        //    {
-        //        for (int j = 0; j <= resolution; ++j)
-        //        {
-        //            double u = (double)j / resolution;
-        //            var p = vertices_[0] * (1 - u) + vertices_[1] * u;
-        //            var q = vertices_[3] * (1 - u) + vertices_[2] * u;
-        //            for (int k = 0; k <= resolution; ++k)
-        //            {
-        //                double v = (double)k / resolution;
-        //                parameters.Add(p * (1 - v) + q * v);
-        //            }
-        //        }
-        //    }
-        //    else
-        //    { // n_ > 4
-        //        parameters.Add(center_);
-        //        for (int j = 1; j <= resolution; ++j)
-        //        {
-        //            double u = (double)j / (double)resolution;
-        //            for (int k = 0; k < n_; ++k)
-        //                for (int i = 0; i < j; ++i)
-        //                {
-        //                    double v = (double)i / (double)j;
-        //                    Point2d ep = vertices_.Prev(k) * (1.0 - v) + vertices_[k] * v;
-        //                    Point2d p = center_ * (1.0 - u) + ep * u;
-        //                    parameters.Add(p);
-        //                }
-        //        }
-        //    }
-        //    return parameters;
-        //}
-
         protected virtual List<Point2d> ParametersImpl(int resolution)
         {
             List<Point2d> parameters = new List<Point2d>(MeshSize(resolution));
@@ -354,6 +307,36 @@ namespace SCAD
                         }
                 }
             }
+            return parameters;
+        }
+
+        public List<Point2d> ParametersSpecial(int resolution)
+        {
+            int size = MeshSize(resolution) * 2;
+            if (parameters_.Count() == size)
+                return parameters_;
+            parameters_ = ParametersImplSpecial(resolution);
+            return parameters_;
+        }
+
+        protected virtual List<Point2d> ParametersImplSpecial(int resolution)
+        {
+            List<Point2d> parameters = new List<Point2d>(MeshSize(resolution));
+
+            parameters.Add(center_);
+            for (int j = 1; j <= resolution; ++j)
+            {
+                double u = (double)j / (double)resolution;
+                for (int k = 0; k < n_; ++k)
+                    for (int i = 0; i < j; ++i)
+                    {
+                        double v = (double)i / (double)j;
+                        Point2d ep = vertices_.Prev(k) * (1.0 - v) + vertices_[k] * v;
+                        Point2d p = center_ * (1.0 - u) + ep * u;
+                        parameters.Add(p);
+                    }
+            }
+
             return parameters;
         }
 
@@ -435,6 +418,88 @@ namespace SCAD
         //    }
         //    return mesh;
         //}
+
+        //protected virtual List<Point2d> ParametersImpl()
+        //{
+        //    List<Point2d> parameters = new List<Point2d>(MeshSize());
+
+        //    if (n_ == 3)
+        //    {
+        //        for (int j = 0; j <= resolution; ++j)
+        //        {
+        //            double u = (double)j / resolution;
+        //            var p = vertices_[0] * u + vertices_[2] * (1 - u);
+        //            var q = vertices_[1] * u + vertices_[2] * (1 - u);
+        //            for (int k = 0; k <= j; ++k)
+        //            {
+        //                double v = j == 0 ? 1.0 : (double)k / j;
+        //                parameters.Add(p * (1 - v) + q * v);
+        //            }
+        //        }
+        //    }
+        //    else if (n_ == 4)
+        //    {
+        //        for (int j = 0; j <= resolution; ++j)
+        //        {
+        //            double u = (double)j / resolution;
+        //            var p = vertices_[0] * (1 - u) + vertices_[1] * u;
+        //            var q = vertices_[3] * (1 - u) + vertices_[2] * u;
+        //            for (int k = 0; k <= resolution; ++k)
+        //            {
+        //                double v = (double)k / resolution;
+        //                parameters.Add(p * (1 - v) + q * v);
+        //            }
+        //        }
+        //    }
+        //    else
+        //    { // n_ > 4
+        //        parameters.Add(center_);
+        //        for (int j = 1; j <= resolution; ++j)
+        //        {
+        //            double u = (double)j / (double)resolution;
+        //            for (int k = 0; k < n_; ++k)
+        //                for (int i = 0; i < j; ++i)
+        //                {
+        //                    double v = (double)i / (double)j;
+        //                    Point2d ep = vertices_.Prev(k) * (1.0 - v) + vertices_[k] * v;
+        //                    Point2d p = center_ * (1.0 - u) + ep * u;
+        //                    parameters.Add(p);
+        //                }
+        //        }
+        //    }
+        //    return parameters;
+        //}
+
+        public virtual TriMesh MeshTopologySpecial(int resolution)
+        {
+            TriMesh mesh = new TriMesh();
+            mesh.resizePoints(MeshSize(resolution));
+
+            int inner_start = 0, outer_vert = 1;
+            for (int layer = 1; layer <= resolution; ++layer)
+            {
+                int inner_vert = inner_start, outer_start = outer_vert;
+                for (int side = 0; side < n_; ++side)
+                {
+                    int vert = 0;
+                    while (true)
+                    {
+                        int next_vert = (side == n_ - 1 && vert == layer - 1) ? outer_start : (outer_vert + 1);
+                        mesh.addTriangle(inner_vert, outer_vert, next_vert);
+                        ++outer_vert;
+                        if (++vert == layer)
+                            break;
+                        int inner_next = (side == n_ - 1 && vert == layer - 1) ? inner_start : (inner_vert + 1);
+                        mesh.addTriangle(inner_vert, next_vert, inner_next);
+                        inner_vert = inner_next;
+                    }
+                }
+                inner_start = outer_start;
+
+            }
+            return mesh;
+        }
+
 
         public virtual TriMesh MeshTopology(int resolution)
         {

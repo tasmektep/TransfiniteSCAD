@@ -4,6 +4,7 @@ using SCAD;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Windows.Controls.Ribbon;
 using System.Windows.Media.Media3D;
 using static SCAD.Domain;
@@ -30,10 +31,14 @@ namespace SCAD
         Parametrization P = new Parametrization();
         //List<Ribbon> R = new List<Ribbon>();
 
+        //protected D domain_;
+        //protected P param_;
+        //protected List<R> ribbons_;
+
         protected int n_;
         protected Parametrization param_ = default;
         List<Ribbon> ribbons_ = new List<Ribbon>();
-
+        private Mesh domainMesh = new Mesh();
         Parametrization_Method pm = new Parametrization_Method();
         Blending_Method bm = new Blending_Method();
 
@@ -53,7 +58,6 @@ namespace SCAD
             else if (dm == Domain_Method.Domain_Curved)
                 domain_ = new DomainCurved();
         }
-     
 
         const double epsilon = 1.0e-8;
         private SurfacePatch sP = new SurfacePatch();
@@ -77,8 +81,10 @@ namespace SCAD
         //}
 
         public Domain GetDomain { get { return domain_; } }
-        public Parametrization GetParametrization { get { return P; } }
 
+        public Mesh GetDomainMesh { get { return domainMesh; } }
+
+        public Parametrization GetParametrization { get { return P; } }
 
         public TriMesh MeshTopology(int resolution)
         {
@@ -92,11 +98,11 @@ namespace SCAD
             return uvs;
         }
 
-
         public void setGamma(bool use_gamma)
         {
             use_gamma_ = use_gamma;
         }
+
         public void setCurve(int i, NurbsCurve curve)
         {
             if (n_ <= i)
@@ -113,11 +119,16 @@ namespace SCAD
         {
             ribbons_.Clear();
             ribbons_.Capacity = (curves.Count);
-            foreach (NurbsCurve curve in curves)
+            for (int i = 0; i < curves.Count; i++)
             {
                 ribbons_.Add(newRibbon());
-                ribbons_.Last().setCurve(curve);
+                ribbons_.Last().setCurve(curves[i].ToNurbsCurve());
+
             }
+            //foreach (NurbsCurve curve in curves)
+            //{
+
+            //}
 
             domain_.SetSides(curves);
             n_ = curves.Count;
@@ -165,10 +176,6 @@ namespace SCAD
             }
         }
 
-
-
-
-
         public Vector3d ribbonHandler(int i)
         {
             return ribbons_[i].handler();
@@ -178,6 +185,7 @@ namespace SCAD
         {
             ribbons_[i].setHandler(h);
         }
+
         public void overrideNormalFence(int i, Vector3d fence)
         {
             ribbons_[i].overrideNormalFence(fence);
@@ -197,7 +205,6 @@ namespace SCAD
         {
             ribbons_[i].reset();
         }
-
         public virtual void update(int i)
         {
             if (domain_.update())
@@ -208,6 +215,7 @@ namespace SCAD
             updateCorner(prev(i));
             updateCorner(i);
         }
+
         public virtual void update()
         {
             if (domain_.update())
@@ -220,13 +228,11 @@ namespace SCAD
             }
             updateCorners();
         }
+
         public Domain domain()
         {
             return domain_;
         }
-        //public Parameterization parameterization(){
-        //  return param_;
-        //}
 
         public Ribbon ribbon(int i)
         {
@@ -239,6 +245,7 @@ namespace SCAD
             return katoout;
             //return new Point3d();
         }
+
         //public virtual Mesh eval(int resolution)
         //{
         //    TriMesh mesh = domain_.MeshTopology(resolution);
@@ -266,10 +273,37 @@ namespace SCAD
             {
                 points.Add(eval(uv));
             }
-            var msh = mesh.Getmesh;
+
+            domainMesh = mesh.Getmesh;
+            var msh = mesh.Getmesh.DuplicateMesh();
+
+            domainMesh.Vertices.AddVertices(uvs.Select(x => new Point3d(x.X, x.Y, 0)));
+
             msh.Vertices.AddVertices(points);
             P = sP.GetParametrization;
             return msh;
+        }
+
+        public virtual Mesh eval(Mesh rhinoMesh)
+        {
+            Mesh mesh3d = rhinoMesh.DuplicateMesh();
+            var uvs = rhinoMesh.Vertices.ToPoint3dArray().Select(pts3d => new Point2d(pts3d.X, pts3d.Y)).ToList();
+            List<Point3d> points = new List<Point3d>();
+            points.Capacity = uvs.Count;
+
+            sP = new SurfacePatch(domain_, GetRibbons, pm, bm);
+
+            foreach (var uv in uvs)
+            {
+                points.Add(eval(uv));
+            }
+            for (int i = 0; i < uvs.Count; i++)
+            {
+                mesh3d.Vertices[i] = new Point3f((float)points[i].X, (float)points[i].Y, (float)points[i].Z);
+            }
+
+            P = sP.GetParametrization;
+            return mesh3d;
         }
         protected virtual Ribbon newRibbon() { return new Ribbon(); }
 
@@ -416,9 +450,6 @@ namespace SCAD
 
         public List<Ribbon> GetRibbons { get { return ribbons_.Select(x => (Ribbon)x).ToList(); } }
 
-        //protected D domain_;
-        //protected P param_;
-        //protected List<R> ribbons_;
 
         private struct CornerData
         {

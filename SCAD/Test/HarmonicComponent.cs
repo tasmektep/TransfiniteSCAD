@@ -135,7 +135,7 @@ namespace Grasshopper2
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("36f400de-6fdf-4688-b6f3-0150b11d932b"); }
+            get { return new Guid("c586fa16-f641-415f-aac1-2b7e8c419490"); }
         }
     }
 }
