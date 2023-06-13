@@ -57,6 +57,8 @@ namespace SCAD
             List<Curve> curves_ = new List<Curve>();
             var ptsDomain = new List<Point3d>();
             var rhinoMesh = new Mesh();
+            var domainMesh = new Mesh();
+
             int d = 0, p = 0, b = 0;
             DA.GetDataList(0, curves_);
             DA.GetData(1, ref d);
@@ -70,7 +72,7 @@ namespace SCAD
             var dm_e = (Domain_Method)d;
             var pm = (Parametrization_Method)p;
             var bm = (Blending_Method)b;
-            int resolution = 5;
+            int resolution = 20;
             #region
             //Domain dm = new Domain();
 
@@ -98,9 +100,7 @@ namespace SCAD
             if (dm_e == Domain_Method.Domain_Regular)
             {
                 msh = surf.eval(resolution);
-                var dm = surf.GetDomain;
-                
-
+                domainMesh = surf.GetDomainMesh;
             }
             else
                 msh = surf.eval(rhinoMesh);
@@ -154,7 +154,7 @@ namespace SCAD
 
             DA.SetData(0, msh);
             //DA.SetDataList(2, dm.Vertices);
-            //DA.SetData(3, domainMesh);
+            DA.SetData(3, domainMesh);
             //DA.SetDataList(4, sP.planes);
             //DA.SetDataList(5, pointss);
             //DA.SetDataTree(6, stringtree);
