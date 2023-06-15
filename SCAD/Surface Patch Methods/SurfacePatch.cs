@@ -57,22 +57,26 @@ namespace SCAD
        
             Point3d r_sum = new Point3d();
 
-
             for (int i = 0; i < curves.Count; i++)
             {
-                Vector3d T = (ribbons[i].Eval(new Point2d(si[i], 1.0)) - curves[i].PointAt(si[i])); // Ribbon vector  
-                if (di[i] < 0.01)
-                {
-                    r_sum = curves[i].PointAt(si[i]);
-                    break;
-                }
-
                 Plane VecPlane = new Plane();
                 //double s = curves[i].Domain.Min + si[i] * (curves[i].Domain.Max - curves[i].Domain.Min);
                 curves[i].Domain = new Interval(0.0, 1.0);
                 Vector3d crossproduct = Vector3d.CrossProduct(curves[i].TangentAt(si[i]), curves[i].CurvatureAt(si[i]));
                 //Vector3d T = (ribbons[i].eval(new Point2d(si[i], di[i]))- curves[i].PointAt(si[i])); // Ribbon vector      
-                //Vector3d T = (ribbons[i].Eval(new Point2d(si[i], 1.0))- curves[i].PointAt(si[i])); // Ribbon vector      
+                Vector3d T = (ribbons[i].Eval(new Point2d(si[i], 1.0))- curves[i].PointAt(si[i])); // Ribbon vector      
+                //if (i ==0)
+                //    T = new Vector3d(0,1,0);        
+                //if (i ==1)
+                //    T = new Vector3d(-1,0,0);         
+                //if (i ==2)
+                //    T = new Vector3d(0,-1,0);         
+                //if (i ==3)
+                //    T = new Vector3d(-1,0,0);         
+                //if (i ==4)
+                //    T = new Vector3d(0,-1,0);        
+                //if (i ==5)
+                //    T = new Vector3d(1,0,0);       
                 //T.Unitize();
                 planes.Add(VecPlane);
                 Point3d r = curves[i].PointAt(si[i]) + (di[i] * T);

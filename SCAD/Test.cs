@@ -44,7 +44,7 @@ namespace SCAD
             pManager.AddPointParameter("Domain V", "Dv", "Domain vertices", GH_ParamAccess.list);
             pManager.AddMeshParameter("Domain Mesh", "Dm", "Domain Mesh Model", GH_ParamAccess.item);
             pManager.AddPlaneParameter("Ribbon Vector", "Rv", "Ribbon vectors", GH_ParamAccess.list);
-            pManager.AddCurveParameter("Ribbon center", "Rc", "Ribbon center", GH_ParamAccess.list);
+            pManager.AddPointParameter("Ribbon center", "Pt", "Ribbon center", GH_ParamAccess.list);
             pManager.AddTextParameter("Ribbon Vector", "Rv", "Ribbon vectors", GH_ParamAccess.tree);
         }
 
@@ -105,7 +105,12 @@ namespace SCAD
             else
                 msh = surf.Eval(rhinoMesh);
             var pms = surf.GetParametrization;
-        
+
+            List<Point3d> pts = new List<Point3d>();
+
+            pts.Add(surf.Eval(new Point2d(0.94, 0.94)));
+
+
             //for (int i = 0; i < uvs.Count; i++)
             //    ptsDomain.Add(new Point3d(uvs[i].X, uvs[i].Y, 0));
             //domainMesh.Vertices.AddVertices(ptsDomain);
@@ -158,7 +163,7 @@ namespace SCAD
             //DA.SetDataList(2, dm.Vertices);
             DA.SetData(3, domainMesh);
             //DA.SetDataList(4, sP.planes);
-            //DA.SetDataList(5, lines);
+            DA.SetDataList(5, pts);
             //DA.SetDataTree(6, stringtree);
 
         }

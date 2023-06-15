@@ -44,9 +44,9 @@ namespace SCAD
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             var surf = new SCAD.Surface<RibbonCompatible>(Domain_Method.Domain_Regular,Parametrization_Method.RadialDistanceFunction, Blending_Method.Special_Side_Blending);
-            int resolution = 10;
-            double scaling = 20.0;
-            double ribbon_length = 0.25;
+            int resolution = 30;
+            double scaling = 5;
+            double ribbon_length = 0.15;
 
             List<Curve> curves_ = new List<Curve>();
             DA.GetDataList(0, curves_);

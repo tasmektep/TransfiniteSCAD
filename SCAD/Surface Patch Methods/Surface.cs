@@ -293,7 +293,6 @@ namespace SCAD
             points.Capacity = uvs.Count;
 
             sP = new SurfacePatch(domain_, GetRibbons, pm, bm);
-
             foreach (var uv in uvs)
             {
                 points.Add(Eval(uv));
