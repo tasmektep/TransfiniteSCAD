@@ -46,16 +46,16 @@ namespace SCAD
             var surf = new SCAD.Surface<RibbonCompatible>(Domain_Method.Domain_Regular,Parametrization_Method.RadialDistanceFunction, Blending_Method.Special_Side_Blending);
             int resolution = 10;
             double scaling = 20.0;
-            double ribbon_length = 5;
+            double ribbon_length = 0.25;
 
             List<Curve> curves_ = new List<Curve>();
             DA.GetDataList(0, curves_);
 
-            surf.setCurves(curves_);
-            surf.setupLoop();
-            surf.update();
+            surf.SetCurves(curves_);
+            surf.SetupLoop();
+            surf.Update();
 
-            int n = surf.domain().Size;
+            int n = surf.Domain().Size;
             //n = 1;
             int size = n * resolution * 2;
             List<Point3d> pv = new List<Point3d>(); pv.Capacity = size;
@@ -65,9 +65,9 @@ namespace SCAD
                 for (int j = 0; j < resolution; ++j)
                 {
                     double u = (double)j / resolution;
-                    Point3d p = surf.ribbon(i).curve().PointAt(u);
+                    Point3d p = surf.Ribbon(i).Curve().PointAt(u);
                     pv.Add(p);
-                    p += surf.ribbon(i).normal(u) * scaling;
+                    p += surf.Ribbon(i).Normal(u) * scaling;
                     pv.Add(p);
                 }
             }
@@ -96,12 +96,12 @@ namespace SCAD
                 for (int j = 0; j <= resolution; ++j)
                 {
                     double u = (double)j / resolution;
-                    pv.Add(surf.ribbon(i).curve().PointAt(u));
-                    pv.Add(surf.ribbon(i).eval(new Point2d(u, ribbon_length)));
-                    var pt = surf.ribbon(i).curve().PointAt(u);
+                    pv.Add(surf.Ribbon(i).Curve().PointAt(u));
+                    pv.Add(surf.Ribbon(i).Eval(new Point2d(u, ribbon_length)));
+                    var pt = surf.Ribbon(i).Curve().PointAt(u);
                     ptList.Add(pt);
 
-                    var vec = surf.ribbon(i).eval(new Point2d(u, ribbon_length)) - pt;
+                    var vec = surf.Ribbon(i).Eval(new Point2d(u, ribbon_length)) - pt;
                     //vec.Unitize();
                     vecList.Add(vec);
                 }

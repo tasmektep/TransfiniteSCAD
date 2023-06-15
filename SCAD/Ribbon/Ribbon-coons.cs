@@ -14,13 +14,13 @@ namespace SCAD
         protected NurbsCurve left_, right_, top_;
         protected Point3d bl_, br_, tl_, tr_;
         ~RibbonCoons() { }
-        public override void update()
+        public override void Update()
         {
-            left_ = prev_.curve();
-            right_ = next_.curve();
+            left_ = prev_.Curve();
+            right_ = next_.Curve();
 
-            var left2 = prev_.prev_.curve();
-            var right2 = prev_.prev_.curve();
+            var left2 = prev_.prev_.Curve();
+            var right2 = prev_.prev_.Curve();
             //var left2 = dynamic_cast<RibbonCoons*>(prev_.lock ().get())->prev_.lock ()->curve();
             //var right2 = dynamic_cast<RibbonCoons*>(next_.lock ().get())->next_.lock ()->curve();
             var p1 = left_.PointAt(0.0);
@@ -35,20 +35,21 @@ namespace SCAD
                 var p2 = p1 - der[1] / 3.0;
                 der = right2.DerivativeAt(0.0, 1);
                 var q2 = q1 + der[1] / 3.0;
-                top_ = NurbsCurve.Create(false, 0, new List<Point3d>() { q1, q2, p2, p1 }); // 0-degree Bezier curve
+                var lp  = new List<Point3d>() { q1, q2, p2, p1 };
+                top_ = NurbsCurve.Create(false, 1, lp); // 0-degree Bezier curve
             }
             bl_ = curve_.PointAt(0.0);
             br_ = curve_.PointAt(1.0);
             tl_ = left_.PointAt(0.0);
             tr_ = right_.PointAt(1.0);
-            base.update();
+            base.Update();
         }
-        public override Vector3d crossDerivative(double s)
+        public override Vector3d CrossDerivative(double s)
         {
             // TODO
             return new Vector3d();
         }
-        public override Point3d eval(Point2d sd)
+        public override Point3d Eval(Point2d sd)
         {
             double s = inrange(0, sd[0], 1), d = inrange(0, sd[1], 1),
              s1 = inrange(0, 1 - s, 1), d1 = inrange(0, 1 - d, 1);

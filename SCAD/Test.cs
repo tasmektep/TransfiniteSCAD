@@ -44,7 +44,7 @@ namespace SCAD
             pManager.AddPointParameter("Domain V", "Dv", "Domain vertices", GH_ParamAccess.list);
             pManager.AddMeshParameter("Domain Mesh", "Dm", "Domain Mesh Model", GH_ParamAccess.item);
             pManager.AddPlaneParameter("Ribbon Vector", "Rv", "Ribbon vectors", GH_ParamAccess.list);
-            pManager.AddPointParameter("Ribbon center", "Rc", "Ribbon center", GH_ParamAccess.list);
+            pManager.AddCurveParameter("Ribbon center", "Rc", "Ribbon center", GH_ParamAccess.list);
             pManager.AddTextParameter("Ribbon Vector", "Rv", "Ribbon vectors", GH_ParamAccess.tree);
         }
 
@@ -87,9 +87,9 @@ namespace SCAD
 
             var surf = new Surface<RibbonCompatible>(dm_e, pm, bm);
 
-            surf.setCurves(curves2);
-            surf.setupLoop();
-            surf.update();
+            surf.SetCurves(curves2);
+            surf.SetupLoop();
+            surf.Update();
 
             #region Visulize domain
             //var dm = surf.GetDomain;
@@ -99,11 +99,13 @@ namespace SCAD
             var msh = new Mesh();
             if (dm_e == Domain_Method.Domain_Regular)
             {
-                msh = surf.eval(resolution);
+                msh = surf.Eval(resolution);
                 domainMesh = surf.GetDomainMesh;
             }
             else
-                msh = surf.eval(rhinoMesh);
+                msh = surf.Eval(rhinoMesh);
+            var pms = surf.GetParametrization;
+        
             //for (int i = 0; i < uvs.Count; i++)
             //    ptsDomain.Add(new Point3d(uvs[i].X, uvs[i].Y, 0));
             //domainMesh.Vertices.AddVertices(ptsDomain);
@@ -156,10 +158,11 @@ namespace SCAD
             //DA.SetDataList(2, dm.Vertices);
             DA.SetData(3, domainMesh);
             //DA.SetDataList(4, sP.planes);
-            //DA.SetDataList(5, pointss);
+            //DA.SetDataList(5, lines);
             //DA.SetDataTree(6, stringtree);
 
         }
+        
 
         //private string writeroutput(HarmonicMap map, List<Point3f> pointss)
         //{

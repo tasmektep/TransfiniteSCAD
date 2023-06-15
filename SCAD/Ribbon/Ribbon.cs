@@ -29,40 +29,40 @@ namespace SCAD
         protected double multiplier_;
         protected bool handler_initialized_;
 
-        public NurbsCurve curve()
+        public NurbsCurve Curve()
         {
             return curve_;
         }
 
-        public void setCurve(NurbsCurve curve)
+        public void SetCurve(NurbsCurve curve)
         {
             curve_ = curve;
         }
 
-        public void setNeighbors(Ribbon prev, Ribbon next)
+        public void SetNeighbors(Ribbon prev, Ribbon next)
         {
             prev_ = prev;
             next_ = next;
         }
 
-        public double multiplier()
+        public double Multiplier()
         {
             return multiplier_;
         }
 
-        public void setMultiplier(double m)
+        public void SetMultiplier(double m)
         {
             multiplier_ = m;
         }
 
-        public Vector3d handler()
+        public Vector3d Handler()
         {
             if (handler_initialized_)
                 return handler_;
             return new Vector3d();
         }
 
-        public void setHandler(Vector3d h)
+        public void SetHandler(Vector3d h)
         {
             handler_ = h;
             handler_.Unitize();
@@ -70,16 +70,16 @@ namespace SCAD
         }
 
 
-        public void overrideNormalFence(Vector3d fence)
+        public void OverrideNormalFence(Vector3d fence)
         {
             normal_fence_ = fence;
         }
-        public void reset()
+        public void Reset()
         {
             multiplier_ = 1.0;
             handler_initialized_ = false;
         }
-        public virtual void update()
+        public virtual void Update()
         {
             Vector3d normal;
             Vector3d[] der;
@@ -101,13 +101,13 @@ namespace SCAD
             rmf_.update();
         }
 
-        public virtual Vector3d crossDerivative(double s)
+        public virtual Vector3d CrossDerivative(double s)
         { return new Vector3d(); }
-        public virtual Point3d eval(Point2d sd)
+        public virtual Point3d Eval(Point2d sd)
         {
-            return curve_.PointAt(sd[0]) + crossDerivative(sd[0]) * sd[1];
+            return curve_.PointAt(sd[0]) + CrossDerivative(sd[0]) * sd[1];
         }
-        public Vector3d normal(double s)
+        public Vector3d Normal(double s)
         {
             //if (normal_fence_)
             //    return normal_fence_->operator()(s);

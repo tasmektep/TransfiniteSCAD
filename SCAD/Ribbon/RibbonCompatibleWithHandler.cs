@@ -14,10 +14,10 @@ namespace SCAD
 
         ~RibbonCompatibleWithHandler() { }
 
-        public override void update()
+        public override void Update()
         {
-          base.update();
-            Vector3d n = normal(0.5);
+          base.Update();
+            Vector3d n = Normal(0.5);
             if (!handler_initialized_)
             {
                 handler_ = prev_tangent_ / prev_tangent_.Length + next_tangent_ / next_tangent_.Length;
@@ -26,9 +26,9 @@ namespace SCAD
             }
             central_ = handler_ * (prev_tangent_.Length + next_tangent_.Length) / 2.0 * multiplier_;
         }
-        public override Vector3d crossDerivative(double s)
+        public override Vector3d CrossDerivative(double s)
         {
-            Vector3d n = normal(s);
+            Vector3d n = Normal(s);
             Vector3d pt = prev_tangent_ - n * (prev_tangent_ * n);
             Vector3d ch = central_ - n * (central_ * n);
             Vector3d nt = next_tangent_ - n * (next_tangent_ * n);

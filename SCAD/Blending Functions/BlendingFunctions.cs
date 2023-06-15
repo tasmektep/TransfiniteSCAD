@@ -159,7 +159,7 @@ namespace SCAD
         }
         private static double ProductFunction(List<double> d, List<int> n)
         {
-            double Result = 0;
+            double Result;
             List<double> SqreList = new List<double>();
             for (int i = 0; i < d.Count; i++)
             {

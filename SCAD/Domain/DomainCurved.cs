@@ -11,7 +11,7 @@ namespace SCAD
     {
         ~DomainCurved() { }
 
-        public override bool update()
+        public override bool Update()
         {
             int m = curves_.Count();
             var temp_vertices = new List<Point3d>();
@@ -38,7 +38,7 @@ namespace SCAD
                 temp_vertices2d.Add(new Point2d(temp_vertice.X, temp_vertice.Y));
             }
             vertices_ = temp_vertices2d;
-            return base.update();
+            return base.Update();
         }
         protected override void ComputeCenter() => center_ = new Point2d(0.0, 0.0);
 

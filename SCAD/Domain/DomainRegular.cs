@@ -11,7 +11,7 @@ namespace SCAD
     {
         ~DomainRegular() { }
 
-        public override bool update()
+        public override bool Update()
         {
             int m = curves_.Count();
             if (n_ == m)
@@ -20,7 +20,7 @@ namespace SCAD
             if (m == 4)
             {
                 vertices_ = new List<Point2d>() { new Point2d(1, 1), new Point2d(-1, 1), new Point2d(-1, -1), new Point2d(1, -1) };
-                return base.update();
+                return base.Update();
             }
 
             double alpha = 2.0 * M_PI / m;
@@ -34,7 +34,7 @@ namespace SCAD
             //vertices_[i] = Point2D(std::cos(alpha * i), std::sin(alpha * i));
 
 
-            return base.update();
+            return base.Update();
         }
         protected override void ComputeCenter() => center_ = new Point2d(0.0, 0.0);
     }

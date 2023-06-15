@@ -11,7 +11,7 @@ namespace SCAD
     {
         ~DomainConcave() { }
 
-        public override bool update()
+        public override bool Update()
         {
             int m = curves_.Count();
 
@@ -24,7 +24,7 @@ namespace SCAD
             }
 
 
-            return base.update();
+            return base.Update();
         }
         protected override void ComputeCenter() => center_ = new Point2d(0.0, 0.0);
 

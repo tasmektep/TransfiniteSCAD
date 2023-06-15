@@ -176,7 +176,7 @@ namespace SCAD
 
         // Computes everything from vertices
         // except for parameters, which are computed only when needed
-        public virtual bool update()
+        public virtual bool Update()
         {
             n_ = vertices_.Count();
             ComputeCenter();
@@ -557,17 +557,17 @@ namespace SCAD
             }
             return mesh;
         }
-        public virtual Point2d edgePoint(int i, double s)
+        public virtual Point2d EdgePoint(int i, double s)
         {
             return vertices_[i] * s + vertices_.Prev(i) * (1.0 - s);
         }
 
-        public double edgeLength(int i)
+        public double EdgeLength(int i)
         {
             return (vertices_[i] - vertices_.Prev(i)).Length;
         }
 
-        public double angle(int i)
+        public double Angle(int i)
         {
             Vector2d v1 = vertices_.Prev(i) - vertices_[i];
             Vector2d v2 = vertices_.Next(i) - vertices_[i];

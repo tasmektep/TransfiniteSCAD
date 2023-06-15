@@ -46,28 +46,14 @@ namespace SCAD
         private Domain domain;
 
 
-        public Parametrization()
-        { }
+        public Parametrization() { }
 
-        // Input    ::
-
-        // Output   ::
-
-
-        //IsoLine
-
-
-        //MVC
-
-
-        //Harmonic 
         public Parametrization(Parametrization_Method method, List<Curve> domaincurves, Domain domain)
         {
-
             this.method = method;
             this.domainC = domaincurves;
             this.domain = domain;
-            HarmonicMapCreate_curve(domainC);
+            //HarmonicMapCreate_curve(domainC);
         }
         public Parametrization(Parametrization_Method method, Domain domain)
         {
@@ -95,7 +81,6 @@ namespace SCAD
                 this.domain = domain;
             }
         }
-
 
         public (List<double> si, List<double> di) GetPoint(double u, double v)
         {
@@ -127,9 +112,9 @@ namespace SCAD
             for (int i = 0; i < n; i++)
             {
                 ///
-                bool success_si = harmonic_eval(HarmonicMapList_si[i], point, out double result_si);//harmonic calculation
+                bool success_si = Harmonic_eval(HarmonicMapList_si[i], point, out double result_si);//harmonic calculation
                 ///
-                bool success_di = harmonic_eval(HarmonicMapList_di[i], point, out double result_di);//harmonic calculation
+                bool success_di = Harmonic_eval(HarmonicMapList_di[i], point, out double result_di);//harmonic calculation
                 ///
 
                 //if (success_si == false) AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Harmonic function si!!");
@@ -149,36 +134,31 @@ namespace SCAD
             HarmonicMapList_si = new List<HarmonicMap>();
             HarmonicMapList_di = new List<HarmonicMap>();
             List<(double, double)> output = new List<(double, double)>();
-            int i_before, i_after;
+            int i_before, i_after, selected_curve = 999;
+            bool biharmonic = false;
+            double epsilon = 1.0e-5;
+            int levels = 9;
             double value = 1;
-            Interval Ix, Iy;
-            (Ix, Iy) = domain.Bounds;
+            (Interval Ix, Interval Iy) = domain.Bounds;
+            double[] minn = { Ix.Min, Iy.Min }, maxx = { Ix.Max, Iy.Max }; // domain polygon size
 
             //// Domain curve creation without "value" or "z"
             List<Point3d[]> DomainPolygonHarmonic_main = new List<Point3d[]> { };
             for (int i = 0; i < curvepointlist.Count; i++)
-            {
                 DomainPolygonHarmonic_main.Add(curvepointlist[i].ToArray());
-            }
 
             for (int i = 0; i < DomainPolygonHarmonic_main.Count; i++)
             {
                 i_before = IndexWrapper((i - 1), DomainPolygonHarmonic_main.Count);
                 int i_beforebefore = IndexWrapper((i - 2), DomainPolygonHarmonic_main.Count);
                 i_after = IndexWrapper((i + 1), DomainPolygonHarmonic_main.Count);
-                double[] minn = { Ix.Min, Iy.Min }, maxx = { Ix.Max, Iy.Max }; // domain polygon size
-                //double[] minn = { -7.25685, -100.042765 }, maxx = { 132.191, 142.896 }; // domain polygon size
 
-
-                int selected_curve = 999;
                 ///***********
                 ///harmonic map created for si -----------------------------------
                 ///***********
-                //double[] min = { Ix.Min, Iy.Min }, max = { Ix.Max, Iy.Max }; // domain polygon size
-                double[] min = minn, max =maxx; // domain polygon size
+                double[] min = minn, max = maxx; // domain polygon size
                 HarmonicMap map_si;
-                int levels = 9;//???
-                map_si = harmonic_create(min, max, levels);
+                map_si = Harmonic_create(min, max, levels);
 
                 ///Assigned Value on domain points, si
                 List<Point3d[]> DomainPolygonHarmonic = new List<Point3d[]>();
@@ -188,39 +168,30 @@ namespace SCAD
                     if (ii == i_after)
                     {
                         for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
-                        {
                             DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, value);
-                        }
                     }
                     else if (ii == i_before)
                     {
                         for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
-                        {
                             DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, 0);
-                        }
                     }
                     else if (ii == i)
                     {
                         double stepsize = value / (DomainPolygonHarmonic[ii].Length - 1);
                         for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
-                        {
                             DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, stepsize * pt);
-                        }
                     }
                     else if (ii == i_beforebefore)
                     {
                         double stepsize = value / (DomainPolygonHarmonic[ii].Length - 1);
                         for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
-                        {
-                            DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, stepsize * ((DomainPolygonHarmonic[ii].Length - 1) - pt));
-                        }
+                            DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y,
+                                stepsize * ((DomainPolygonHarmonic[ii].Length - 1) - pt));
                     }
                     else
                     {
                         for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
-                        {
                             DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, value);
-                        }
                     }
                 }
                 ////
@@ -249,9 +220,9 @@ namespace SCAD
                     }
                     ////
                     ///
-                    harmonic_add_curve(map_si, DomainPolygonHarmonic[ii], DomainPolygonHarmonic[ii].Length);
+                    Harmonic_add_curve(map_si, DomainPolygonHarmonic[ii], DomainPolygonHarmonic[ii].Length);
                 }
-                harmonic_solve(map_si, 1.0e-5, false);
+                Harmonic_solve(map_si, epsilon, biharmonic);
                 ///****
                 HarmonicMapList_si.Add(map_si);
                 ////
@@ -263,8 +234,7 @@ namespace SCAD
                 //double[] min_di = { Ix.Min, Iy.Min }, max_di = { Ix.Max, Iy.Max };  // domain polygon size
                 double[] min_di = minn, max_di = maxx; // domain polygon size
                 HarmonicMap map_di;
-                int levels_di = 9;//???
-                map_di = harmonic_create(min_di, max_di, levels_di);
+                map_di = Harmonic_create(min_di, max_di, levels);
 
                 ///Assigned Value on domain points, di
                 DomainPolygonHarmonic = new List<Point3d[]>();
@@ -275,31 +245,23 @@ namespace SCAD
                     {
                         double stepsize = value / (DomainPolygonHarmonic[ii].Length - 1);
                         for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
-                        {
                             DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, stepsize * pt);
-                        }
                     }
                     else if (ii == i_before)
                     {
                         double stepsize = value / (DomainPolygonHarmonic[ii].Length - 1);
                         for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
-                        {
                             DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, stepsize * ((DomainPolygonHarmonic[ii].Length - 1) - pt));
-                        }
                     }
                     else if (ii == i)
                     {
                         for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
-                        {
                             DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, 0);
-                        }
                     }
                     else
                     {
                         for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
-                        {
                             DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, value);
-                        }
                     }
                 }
                 ////
@@ -328,9 +290,9 @@ namespace SCAD
                     }
                     ////
                     ///
-                    harmonic_add_curve(map_di, DomainPolygonHarmonic[ii], DomainPolygonHarmonic[ii].Length);
+                    Harmonic_add_curve(map_di, DomainPolygonHarmonic[ii], DomainPolygonHarmonic[ii].Length);
                 }
-                harmonic_solve(map_di, 1.0e-5, false);
+                Harmonic_solve(map_di, epsilon, biharmonic);
                 ///*****
                 HarmonicMapList_di.Add(map_di);
                 ////
@@ -339,207 +301,208 @@ namespace SCAD
 
         }
 
-        private void HarmonicMapCreate_curve(List<Curve> domaincurves)
-        {
-            HarmonicMapList_si = new List<HarmonicMap>();
-            HarmonicMapList_di = new List<HarmonicMap>();
-            List<(double, double)> output = new List<(double, double)>();
-            int i_before, i_after;
-            double value = 1;
+        //private void HarmonicMapCreate_curve(List<Curve> domaincurves)
+        //{
+        //    HarmonicMapList_si = new List<HarmonicMap>();
+        //    HarmonicMapList_di = new List<HarmonicMap>();
+        //    List<(double, double)> output = new List<(double, double)>();
+        //    int i_before, i_after, selected_curve = 999;
+        //    bool biharmonic = false;
+        //    double epsilon = 1.0e-5;
+        //    int levels = 3;
+        //    double value = 1;
+        //    (Interval Ix, Interval Iy) = domain.Bounds;
+        //    double[] minn = { Ix.Min, Iy.Min }, maxx = { Ix.Max, Iy.Max }; // domain polygon size
+
+        //    ///// Extraction Rhino curve control points for harmonic function
+        //    List<List<Point3d>> curvepointlist = new List<List<Point3d>>();
+        //    for (int i = 0; i < domaincurves.Count; i++)
+        //    {
+        //        List<Point3d> pts = new List<Point3d>();
+        //        foreach (var item in domaincurves[i].ToNurbsCurve().Points)
+        //        {
+        //            pts.Add(item.Location);
+        //        }
+        //        curvepointlist.Add(pts);
+        //    }
 
 
-            ///// Extraction Rhino curve control points for harmonic function
-            List<List<Point3d>> curvepointlist = new List<List<Point3d>>();
-            for (int i = 0; i < domaincurves.Count; i++)
-            {
-                List<Point3d> pts = new List<Point3d>();
-                foreach (var item in domaincurves[i].ToNurbsCurve().Points)
-                {
-                    pts.Add(item.Location);
-                }
-                curvepointlist.Add(pts);
-            }
+        //    //// Domain curve creation without "value" or "z"
+        //    List<Point3d[]> DomainPolygonHarmonic_main = new List<Point3d[]> { };
+        //    for (int i = 0; i < curvepointlist.Count; i++)
+        //    {
+        //        DomainPolygonHarmonic_main.Add(curvepointlist[i].ToArray());
+        //    }
 
+        //    for (int i = 0; i < DomainPolygonHarmonic_main.Count; i++)
+        //    {
+        //        i_before = IndexWrapper((i - 1), DomainPolygonHarmonic_main.Count);
+        //        int i_beforebefore = IndexWrapper((i - 2), DomainPolygonHarmonic_main.Count);
+        //        i_after = IndexWrapper((i + 1), DomainPolygonHarmonic_main.Count);
 
-            //// Domain curve creation without "value" or "z"
-            List<Point3d[]> DomainPolygonHarmonic_main = new List<Point3d[]> { };
-            for (int i = 0; i < curvepointlist.Count; i++)
-            {
-                DomainPolygonHarmonic_main.Add(curvepointlist[i].ToArray());
-            }
+        //        ///***********
+        //        ///harmonic map created for si -----------------------------------
+        //        ///***********
+        //        double[] min = minn, max = maxx; // domain polygon size
+        //        HarmonicMap map_si;
+        //        map_si = harmonic_create(min, max, levels);
 
-            for (int i = 0; i < DomainPolygonHarmonic_main.Count; i++)
-            {
-                i_before = IndexWrapper((i - 1), DomainPolygonHarmonic_main.Count);
-                int i_beforebefore = IndexWrapper((i - 2), DomainPolygonHarmonic_main.Count);
-                i_after = IndexWrapper((i + 1), DomainPolygonHarmonic_main.Count);
+        //        ///Assigned Value on domain points, si
+        //        List<Point3d[]> DomainPolygonHarmonic = new List<Point3d[]>();
+        //        for (int ii = 0; ii < DomainPolygonHarmonic_main.Count; ii++)
+        //        {
+        //            DomainPolygonHarmonic.Add(new Point3d[DomainPolygonHarmonic_main[ii].Length]);
+        //            if (ii == i_after)
+        //            {
+        //                for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
+        //                {
+        //                    DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, value);
+        //                }
+        //            }
+        //            else if (ii == i_before)
+        //            {
+        //                for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
+        //                {
+        //                    DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, 0);
+        //                }
+        //            }
+        //            else if (ii == i)
+        //            {
+        //                double stepsize = value / (DomainPolygonHarmonic[ii].Length - 1);
+        //                for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
+        //                {
+        //                    DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, stepsize * pt);
+        //                }
+        //            }
+        //            else if (ii == i_beforebefore)
+        //            {
+        //                double stepsize = value / (DomainPolygonHarmonic[ii].Length - 1);
+        //                for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
+        //                {
+        //                    DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, stepsize * ((DomainPolygonHarmonic[ii].Length - 1) - pt));
+        //                }
+        //            }
+        //            else
+        //            {
+        //                for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
+        //                {
+        //                    DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, value);
+        //                }
+        //            }
+        //        }
+        //        ////
 
-                ///***********
-                ///harmonic map created for si -----------------------------------
-                ///***********
-                double[] min = { 0, 0 }, max = { 20, 20 }; // domain polygon size
-                HarmonicMap map_si;
-                int levels = 9;//???
-                map_si = harmonic_create(min, max, levels);
+        //        for (int ii = 0; ii < DomainPolygonHarmonic.Count; ++ii)
+        //        {
+        //            ///
+        //            ///middle point repeat
+        //            if (ii == selected_curve)
+        //            {
+        //                List<Point3d> idle = DomainPolygonHarmonic[ii].ToList();
+        //                for (int xx = 0; xx < idle.Count; xx++)
+        //                {
+        //                    if (xx == 3)
+        //                    {
+        //                        Point3d asd = new Point3d(idle[xx]);
+        //                        idle.Insert(xx, asd);
+        //                        idle.Insert(xx, asd);
+        //                        idle.Insert(xx, asd);
+        //                        idle.Insert(xx, asd);
+        //                        //idle.Insert(xx, asd);
+        //                        break;
+        //                    }
+        //                }
+        //                DomainPolygonHarmonic[ii] = idle.ToArray();
+        //            }
+        //            ////
+        //            ///
+        //            harmonic_add_curve(map_si, DomainPolygonHarmonic[ii], DomainPolygonHarmonic[ii].Length);
+        //        }
+        //        harmonic_solve(map_si, 1.0e-5, false);
+        //        ///****
+        //        HarmonicMapList_si.Add(map_si);
+        //        ////
+        //        ////--------------------------------------------------------------
 
-                ///Assigned Value on domain points, si
-                List<Point3d[]> DomainPolygonHarmonic = new List<Point3d[]>();
-                for (int ii = 0; ii < DomainPolygonHarmonic_main.Count; ii++)
-                {
-                    DomainPolygonHarmonic.Add(new Point3d[DomainPolygonHarmonic_main[ii].Length]);
-                    if (ii == i_after)
-                    {
-                        for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
-                        {
-                            DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, value);
-                        }
-                    }
-                    else if (ii == i_before)
-                    {
-                        for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
-                        {
-                            DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, 0);
-                        }
-                    }
-                    else if (ii == i)
-                    {
-                        double stepsize = value / (DomainPolygonHarmonic[ii].Length - 1);
-                        for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
-                        {
-                            DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, stepsize * pt);
-                        }
-                    }
-                    else if (ii == i_beforebefore)
-                    {
-                        double stepsize = value / (DomainPolygonHarmonic[ii].Length - 1);
-                        for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
-                        {
-                            DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, stepsize * ((DomainPolygonHarmonic[ii].Length - 1) - pt));
-                        }
-                    }
-                    else
-                    {
-                        for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
-                        {
-                            DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, value);
-                        }
-                    }
-                }
-                ////
+        //        ///***********
+        //        ///harmonic map created for di -----------------------------------
+        //        ///***********
+        //        double[] min_di = minn, max_di = maxx; // domain polygon size
+        //        HarmonicMap map_di;
+        //        map_di = harmonic_create(min_di, max_di, levels);
 
-                for (int ii = 0; ii < DomainPolygonHarmonic.Count; ++ii)
-                {
-                    ///
-                    ///middle point repeat
-                    if (ii == 2)
-                    {
-                        List<Point3d> idle = DomainPolygonHarmonic[ii].ToList();
-                        for (int xx = 0; xx < idle.Count; xx++)
-                        {
-                            if (xx == 3)
-                            {
-                                Point3d asd = new Point3d(idle[xx]);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                //idle.Insert(xx, asd);
-                                break;
-                            }
-                        }
-                        DomainPolygonHarmonic[ii] = idle.ToArray();
-                    }
-                    ////
-                    ///
-                    harmonic_add_curve(map_si, DomainPolygonHarmonic[ii], DomainPolygonHarmonic[ii].Length);
-                }
-                harmonic_solve(map_si, 1.0e-5, false);
-                ///****
-                HarmonicMapList_si.Add(map_si);
-                ////
-                ////--------------------------------------------------------------
+        //        ///Assigned Value on domain points, di
+        //        DomainPolygonHarmonic = new List<Point3d[]>();
+        //        for (int ii = 0; ii < DomainPolygonHarmonic_main.Count; ii++)
+        //        {
+        //            DomainPolygonHarmonic.Add(new Point3d[DomainPolygonHarmonic_main[ii].Length]);
+        //            if (ii == i_after)
+        //            {
+        //                double stepsize = value / (DomainPolygonHarmonic[ii].Length - 1);
+        //                for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
+        //                {
+        //                    DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, stepsize * pt);
+        //                }
+        //            }
+        //            else if (ii == i_before)
+        //            {
+        //                double stepsize = value / (DomainPolygonHarmonic[ii].Length - 1);
+        //                for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
+        //                {
+        //                    DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, stepsize * ((DomainPolygonHarmonic[ii].Length - 1) - pt));
+        //                }
+        //            }
+        //            else if (ii == i)
+        //            {
+        //                for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
+        //                {
+        //                    DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, 0);
+        //                }
+        //            }
+        //            else
+        //            {
+        //                for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
+        //                {
+        //                    DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, value);
+        //                }
+        //            }
+        //        }
+        //        ////
 
-                ///***********
-                ///harmonic map created for di -----------------------------------
-                ///***********
-                double[] min_di = { 0, 0 }, max_di = { 20, 20 }; // domain polygon size
-                HarmonicMap map_di;
-                int levels_di = 9;//???
-                map_di = harmonic_create(min_di, max_di, levels_di);
+        //        for (int ii = 0; ii < DomainPolygonHarmonic.Count; ++ii)
+        //        {
+        //            ///
+        //            ///middle point repeat
+        //            if (ii == selected_curve)
+        //            {
+        //                List<Point3d> idle = DomainPolygonHarmonic[ii].ToList();
+        //                for (int xx = 0; xx < idle.Count; xx++)
+        //                {
+        //                    if (xx == 3)
+        //                    {
+        //                        Point3d asd = new Point3d(idle[xx]);
+        //                        idle.Insert(xx, asd);
+        //                        idle.Insert(xx, asd);
+        //                        idle.Insert(xx, asd);
+        //                        idle.Insert(xx, asd);
+        //                        idle.Insert(xx, asd);
+        //                        break;
+        //                    }
+        //                }
+        //                DomainPolygonHarmonic[ii] = idle.ToArray();
+        //            }
+        //            ////
+        //            ///
+        //            harmonic_add_curve(map_di, DomainPolygonHarmonic[ii], DomainPolygonHarmonic[ii].Length);
+        //        }
+        //        harmonic_solve(map_di, 1.0e-5, false);
+        //        ///*****
+        //        HarmonicMapList_di.Add(map_di);
+        //        ////
+        //        ////-------------------------------------------------------------
+        //    }
 
-                ///Assigned Value on domain points, di
-                DomainPolygonHarmonic = new List<Point3d[]>();
-                for (int ii = 0; ii < DomainPolygonHarmonic_main.Count; ii++)
-                {
-                    DomainPolygonHarmonic.Add(new Point3d[DomainPolygonHarmonic_main[ii].Length]);
-                    if (ii == i_after)
-                    {
-                        double stepsize = value / (DomainPolygonHarmonic[ii].Length - 1);
-                        for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
-                        {
-                            DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, stepsize * pt);
-                        }
-                    }
-                    else if (ii == i_before)
-                    {
-                        double stepsize = value / (DomainPolygonHarmonic[ii].Length - 1);
-                        for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
-                        {
-                            DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, stepsize * ((DomainPolygonHarmonic[ii].Length - 1) - pt));
-                        }
-                    }
-                    else if (ii == i)
-                    {
-                        for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
-                        {
-                            DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, 0);
-                        }
-                    }
-                    else
-                    {
-                        for (int pt = 0; pt < DomainPolygonHarmonic[ii].Length; pt++)
-                        {
-                            DomainPolygonHarmonic[ii][pt] = new Point3d(DomainPolygonHarmonic_main[ii][pt].X, DomainPolygonHarmonic_main[ii][pt].Y, value);
-                        }
-                    }
-                }
-                ////
-
-                for (int ii = 0; ii < DomainPolygonHarmonic.Count; ++ii)
-                {
-                    ///
-                    ///middle point repeat
-                    if (ii == 2)
-                    {
-                        List<Point3d> idle = DomainPolygonHarmonic[ii].ToList();
-                        for (int xx = 0; xx < idle.Count; xx++)
-                        {
-                            if (xx == 3)
-                            {
-                                Point3d asd = new Point3d(idle[xx]);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                break;
-                            }
-                        }
-                        DomainPolygonHarmonic[ii] = idle.ToArray();
-                    }
-                    ////
-                    ///
-                    harmonic_add_curve(map_di, DomainPolygonHarmonic[ii], DomainPolygonHarmonic[ii].Length);
-                }
-                harmonic_solve(map_di, 1.0e-5, false);
-                ///*****
-                HarmonicMapList_di.Add(map_di);
-                ////
-                ////-------------------------------------------------------------
-            }
-
-        }
-
+        //}
 
         /// <summary>
         /// Radial distance functions were suggested by Charrot and Gregory, and these also work for non-regular domains.
@@ -591,9 +554,7 @@ namespace SCAD
             }
             return (si: si, di: di);
         }
-
     }
-
 
     public static class HarmonicClass
     {
@@ -602,46 +563,46 @@ namespace SCAD
 
         public struct GridValue
         {
-            public bool boundary { get; set; }
-            public double value { get; set; }
+            public bool Boundary { get; set; }
+            public double Value { get; set; }
         };
 
         public struct HarmonicMap
         {
-            public int levels { get; set; }
-            public int size { get; set; }
-            public GridValue[] grid { get; set; }
-            public double[] offset { get; set; }
-            public double scaling { get; set; }
+            public int Levels { get; set; }
+            public int Size { get; set; }
+            public GridValue[] Grid { get; set; }
+            public double[] Offset { get; set; }
+            public double Scaling { get; set; }
         };
 
 
-        public static HarmonicMap harmonic_create(double[] min, double[] max, int levels)
+        public static HarmonicMap Harmonic_create(double[] min, double[] max, int levels)
         {
             /* Create the grid */
             int n = (int)Math.Pow(2, levels);
             HarmonicMap map = new HarmonicMap();
-            map.offset = new double[2];
-            map.levels = levels;
-            map.size = n;
-            map.grid = new GridValue[n * n];
+            map.Offset = new double[2];
+            map.Levels = levels;
+            map.Size = n;
+            map.Grid = new GridValue[n * n];
 
             /* Add a margin of 2.5% on all sides */
             double length = MAX(max[0] - min[0], max[1] - min[1]);
-            map.offset[0] = min[0] - length * 0.025;
-            map.offset[1] = min[1] - length * 0.025;
-            map.scaling = (double)n / length / 1.05;
+            map.Offset[0] = min[0] - length * 0.025;
+            map.Offset[1] = min[1] - length * 0.025;
+            map.Scaling = (double)n / length / 1.05;
 
             /* Initialize cells */
             for (int i = 0; i < n * n; ++i)
             {
-                map.grid[i].boundary = false;
-                map.grid[i].value = 0.0;
+                map.Grid[i].Boundary = false;
+                map.Grid[i].Value = 0.0;
             }
             return map;
         }
 
-        public static void solveHarmonic(GridValue[] grid, int n, double epsilon)
+        public static void SolveHarmonic(GridValue[] grid, int n, double epsilon)
         {
             double change;
             do
@@ -651,16 +612,16 @@ namespace SCAD
                 for (int j = 1, n_1 = n - 1; j < n_1; ++j)
                 {
                     for (int i = 1; i < n_1; ++i, ++index)
-                        if (!grid[index].boundary)
+                        if (!grid[index].Boundary)
                         {
                             double value = 0.0;
-                            value += grid[index - n].value;
-                            value += grid[index - 1].value;
-                            value += grid[index + n].value;
-                            value += grid[index + 1].value;
+                            value += grid[index - n].Value;
+                            value += grid[index - 1].Value;
+                            value += grid[index + n].Value;
+                            value += grid[index + 1].Value;
                             value /= 4.0;
-                            change += Math.Abs(grid[index].value - value);
-                            grid[index].value = value;
+                            change += Math.Abs(grid[index].Value - value);
+                            grid[index].Value = value;
                             ++count;
                         }
                     index += 2;
@@ -670,7 +631,7 @@ namespace SCAD
             } while (change > epsilon);
         }
 
-        public static void solveBiharmonic(GridValue[] grid, int n, double epsilon)
+        public static void SolveBiharmonic(GridValue[] grid, int n, double epsilon)
         {
             double change;
             do
@@ -680,26 +641,26 @@ namespace SCAD
                 for (int j = 2; j < n_2; ++j)
                 {
                     for (int i = 2; i < n_2; ++i, ++index)
-                        if (!grid[index].boundary)
+                        if (!grid[index].Boundary)
                         {
                             double value = 0.0;
-                            value += grid[index - n].value;
-                            value += grid[index - 1].value;
-                            value += grid[index + n].value;
-                            value += grid[index + 1].value;
+                            value += grid[index - n].Value;
+                            value += grid[index - 1].Value;
+                            value += grid[index + n].Value;
+                            value += grid[index + 1].Value;
                             value *= 4.0;
-                            value -= grid[index - n - 1].value;
-                            value -= grid[index - n + 1].value;
-                            value -= grid[index + n - 1].value;
-                            value -= grid[index + n + 1].value;
+                            value -= grid[index - n - 1].Value;
+                            value -= grid[index - n + 1].Value;
+                            value -= grid[index + n - 1].Value;
+                            value -= grid[index + n + 1].Value;
                             value *= 2.0;
-                            value -= grid[index - n2].value;
-                            value -= grid[index - 2].value;
-                            value -= grid[index + n2].value;
-                            value -= grid[index + 2].value;
+                            value -= grid[index - n2].Value;
+                            value -= grid[index - 2].Value;
+                            value -= grid[index + n2].Value;
+                            value -= grid[index + 2].Value;
                             value /= 20.0;
-                            change += Math.Abs(grid[index].value - value);
-                            grid[index].value = value;
+                            change += Math.Abs(grid[index].Value - value);
+                            grid[index].Value = value;
                             ++count;
                         }
                     index += 4;
@@ -711,7 +672,7 @@ namespace SCAD
                         if (j >= 2 && j < n_2 && i >= 2 && i < n_2)
                             continue;
                         index = j * n + i;
-                        if (grid[index].boundary)
+                        if (grid[index].Boundary)
                             continue;
                         double weight = 0.0;
                         double value = 0.0;
@@ -719,7 +680,7 @@ namespace SCAD
                         {
                             int k = index - 1;
                             weight += 2.0;
-                            value += grid[k].value * 2.0;
+                            value += grid[k].Value * 2.0;
                             int neighbors = 4;
                             if (i == 1)
                                 --neighbors;
@@ -731,24 +692,24 @@ namespace SCAD
                             if (i > 1)
                             {
                                 weight -= w;
-                                value -= grid[k - 1].value * w;
+                                value -= grid[k - 1].Value * w;
                             }
                             if (j > 0)
                             {
                                 weight -= w;
-                                value -= grid[k - n].value * w;
+                                value -= grid[k - n].Value * w;
                             }
                             if (j < n - 1)
                             {
                                 weight -= w;
-                                value -= grid[k + n].value * w;
+                                value -= grid[k + n].Value * w;
                             }
                         }
                         if (i < n - 1)
                         {
                             int k = index + 1;
                             weight += 2.0;
-                            value += grid[k].value * 2.0;
+                            value += grid[k].Value * 2.0;
                             int neighbors = 4;
                             if (i == n - 2)
                                 --neighbors;
@@ -760,24 +721,24 @@ namespace SCAD
                             if (i < n - 2)
                             {
                                 weight -= w;
-                                value -= grid[k + 1].value * w;
+                                value -= grid[k + 1].Value * w;
                             }
                             if (j > 0)
                             {
                                 weight -= w;
-                                value -= grid[k - n].value * w;
+                                value -= grid[k - n].Value * w;
                             }
                             if (j < n - 1)
                             {
                                 weight -= w;
-                                value -= grid[k + n].value * w;
+                                value -= grid[k + n].Value * w;
                             }
                         }
                         if (j > 0)
                         {
                             int k = index - n;
                             weight += 2.0;
-                            value += grid[k].value * 2.0;
+                            value += grid[k].Value * 2.0;
                             int neighbors = 4;
                             if (i == 0)
                                 --neighbors;
@@ -789,24 +750,24 @@ namespace SCAD
                             if (i > 0)
                             {
                                 weight -= w;
-                                value -= grid[k - 1].value * w;
+                                value -= grid[k - 1].Value * w;
                             }
                             if (i < n - 1)
                             {
                                 weight -= w;
-                                value -= grid[k + 1].value * w;
+                                value -= grid[k + 1].Value * w;
                             }
                             if (j > 1)
                             {
                                 weight -= w;
-                                value -= grid[k - n].value * w;
+                                value -= grid[k - n].Value * w;
                             }
                         }
                         if (j < n - 1)
                         {
                             int k = index + n;
                             weight += 2.0;
-                            value += grid[k].value * 2.0;
+                            value += grid[k].Value * 2.0;
                             int neighbors = 4;
                             if (i == 0)
                                 --neighbors;
@@ -818,29 +779,29 @@ namespace SCAD
                             if (i > 0)
                             {
                                 weight -= w;
-                                value -= grid[k - 1].value * w;
+                                value -= grid[k - 1].Value * w;
                             }
                             if (i < n - 1)
                             {
                                 weight -= w;
-                                value -= grid[k + 1].value * w;
+                                value -= grid[k + 1].Value * w;
                             }
                             if (j < n - 2)
                             {
                                 weight -= w;
-                                value -= grid[k + n].value * w;
+                                value -= grid[k + n].Value * w;
                             }
                         }
                         value /= weight;
-                        change += Math.Abs(grid[index].value - value);
-                        grid[index].value = value;
+                        change += Math.Abs(grid[index].Value - value);
+                        grid[index].Value = value;
                         ++count;
                     }
                 change /= (double)count;
             } while (change > epsilon);
         }
 
-        public static void solve(GridValue[] grid, int level, double epsilon, bool biharmonic)
+        public static void Solve(GridValue[] grid, int level, double epsilon, bool biharmonic)
         {
             int n = (int)Math.Pow(2, level);
             if (level > MIN_LEVEL)
@@ -851,78 +812,78 @@ namespace SCAD
                 for (int i = 0; i < n1; ++i)
                     for (int j = 0; j < n1; ++j)
                     {
-                        grid1[j * n1 + i].value = 0.0;
+                        grid1[j * n1 + i].Value = 0.0;
                         int count = 0;
-                        if (grid[2 * j * n + 2 * i].boundary)
+                        if (grid[2 * j * n + 2 * i].Boundary)
                         {
                             ++count;
-                            grid1[j * n1 + i].value += grid[2 * j * n + 2 * i].value;
+                            grid1[j * n1 + i].Value += grid[2 * j * n + 2 * i].Value;
                         }
-                        if (grid[2 * j * n + 2 * i + 1].boundary)
+                        if (grid[2 * j * n + 2 * i + 1].Boundary)
                         {
                             ++count;
-                            grid1[j * n1 + i].value += grid[2 * j * n + 2 * i + 1].value;
+                            grid1[j * n1 + i].Value += grid[2 * j * n + 2 * i + 1].Value;
                         }
-                        if (grid[(2 * j + 1) * n + 2 * i].boundary)
+                        if (grid[(2 * j + 1) * n + 2 * i].Boundary)
                         {
                             ++count;
-                            grid1[j * n1 + i].value += grid[(2 * j + 1) * n + 2 * i].value;
+                            grid1[j * n1 + i].Value += grid[(2 * j + 1) * n + 2 * i].Value;
                         }
-                        if (grid[(2 * j + 1) * n + 2 * i + 1].boundary)
+                        if (grid[(2 * j + 1) * n + 2 * i + 1].Boundary)
                         {
                             ++count;
-                            grid1[j * n1 + i].value += grid[(2 * j + 1) * n + 2 * i + 1].value;
+                            grid1[j * n1 + i].Value += grid[(2 * j + 1) * n + 2 * i + 1].Value;
                         }
                         if (count > 0)
                         {
-                            grid1[j * n1 + i].boundary = true;
-                            grid1[j * n1 + i].value /= (double)count;
+                            grid1[j * n1 + i].Boundary = true;
+                            grid1[j * n1 + i].Value /= (double)count;
                         }
                         else
-                            grid1[j * n1 + i].boundary = false;
+                            grid1[j * n1 + i].Boundary = false;
                     }
-                solve(grid1, level1, epsilon, biharmonic);
+                Solve(grid1, level1, epsilon, biharmonic);
                 for (int i = 0; i < n; ++i)
                     for (int j = 0; j < n; ++j)
-                        if (!grid[j * n + i].boundary)
-                            grid[j * n + i].value = grid1[(j / 2) * n1 + i / 2].value;
+                        if (!grid[j * n + i].Boundary)
+                            grid[j * n + i].Value = grid1[(j / 2) * n1 + i / 2].Value;
                 grid1 = null;
             }
 
             /* Solve by iteration */
             if (biharmonic)
-                solveBiharmonic(grid, n, epsilon);
+                SolveBiharmonic(grid, n, epsilon);
             else
-                solveHarmonic(grid, n, epsilon);
+                SolveHarmonic(grid, n, epsilon);
         }
 
-        public static void harmonic_add_point(HarmonicMap map, Point3d point)
+        public static void Harmonic_add_point(HarmonicMap map, Point3d point)
         {
-            int n = map.size;
-            int x = (int)Math.Round((point[0] - map.offset[0]) * map.scaling);
-            int y = (int)Math.Round((point[1] - map.offset[1]) * map.scaling);
-            map.grid[y * n + x].boundary = true;
-            map.grid[y * n + x].value = point[2];
+            int n = map.Size;
+            int x = (int)Math.Round((point[0] - map.Offset[0]) * map.Scaling);
+            int y = (int)Math.Round((point[1] - map.Offset[1]) * map.Scaling);
+            map.Grid[y * n + x].Boundary = true;
+            map.Grid[y * n + x].Value = point[2];
         }
 
-        public static void harmonic_add_line(HarmonicMap map, Point3d from, Point3d to)
+        public static void Harmonic_add_line(HarmonicMap map, Point3d from, Point3d to)
         {
-            int n = map.size;
-            int x0 = (int)Math.Round((from[0] - map.offset[0]) * map.scaling);
-            int y0 = (int)Math.Round((from[1] - map.offset[1]) * map.scaling);
+            int n = map.Size;
+            int x0 = (int)Math.Round((from[0] - map.Offset[0]) * map.Scaling);
+            int y0 = (int)Math.Round((from[1] - map.Offset[1]) * map.Scaling);
             double v0 = from[2];
-            int x1 = (int)Math.Round((to[0] - map.offset[0]) * map.scaling);
-            int y1 = (int)Math.Round((to[1] - map.offset[1]) * map.scaling);
+            int x1 = (int)Math.Round((to[0] - map.Offset[0]) * map.Scaling);
+            int y1 = (int)Math.Round((to[1] - map.Offset[1]) * map.Scaling);
             double v1 = to[2];
             int dx = Math.Abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
             int dy = Math.Abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
             int err = (dx > dy ? dx : -dy) / 2, e2;
             if (err == 0)
             {
-                map.grid[y0 * n + x0].boundary = true;
-                map.grid[y0 * n + x0].value = v0;
-                map.grid[y1 * n + x1].boundary = true;
-                map.grid[y1 * n + x1].value = v1;
+                map.Grid[y0 * n + x0].Boundary = true;
+                map.Grid[y0 * n + x0].Value = v0;
+                map.Grid[y1 * n + x1].Boundary = true;
+                map.Grid[y1 * n + x1].Value = v1;
                 return;
             }
             while (true)
@@ -932,8 +893,8 @@ namespace SCAD
                     ratio = (double)Math.Abs(x1 - x0) / (double)dx;
                 else
                     ratio = (double)Math.Abs(y1 - y0) / (double)dy;
-                map.grid[y0 * n + x0].boundary = true;
-                map.grid[y0 * n + x0].value = v0 * ratio + v1 * (1.0 - ratio);
+                map.Grid[y0 * n + x0].Boundary = true;
+                map.Grid[y0 * n + x0].Value = v0 * ratio + v1 * (1.0 - ratio);
                 if (x0 == x1 && y0 == y1) break;
                 e2 = err;
                 if (e2 > -dx) { err -= dy; x0 += sx; }
@@ -941,10 +902,10 @@ namespace SCAD
             }
         }
 
-        public static void harmonic_add_curve(HarmonicMap map, Point3d[] points, int n)
+        public static void Harmonic_add_curve(HarmonicMap map, Point3d[] points, int n)
         {
             double tmp;
-            int resolution = map.size;
+            int resolution = map.Size;
             double[] coeff = new double[n];
             Point3d from, to;
             from = new Point3d(points[0].X, points[0].Y, points[0].Z);
@@ -971,69 +932,69 @@ namespace SCAD
                     to += points[j] * coeff[j];
                 }
                 /* Draw a segment */
-                harmonic_add_line(map, from, to);
+                Harmonic_add_line(map, from, to);
                 /* Swap from & to */
                 (from, _) = (to, from);
             }
             coeff = null;
         }
 
-        public static void harmonic_solve(HarmonicMap map, double epsilon, bool biharmonic)
+        public static void Harmonic_solve(HarmonicMap map, double epsilon, bool biharmonic)
         {
-            solve(map.grid, map.levels, epsilon, biharmonic);
+            Solve(map.Grid, map.Levels, epsilon, biharmonic);
         }
 
-        public static bool inside_map(HarmonicMap map, int i, int j)
+        public static bool Inside_map(HarmonicMap map, int i, int j)
         {
-            return i >= 0 && j >= 0 && i < map.size && j < map.size;
+            return i >= 0 && j >= 0 && i < map.Size && j < map.Size;
         }
 
-        public static bool harmonic_eval(HarmonicMap map, Point3d point, out double value)
+        public static bool Harmonic_eval(HarmonicMap map, Point3d point, out double value)
         {
-            int n = map.size;
-            double x = (point[0] - map.offset[0]) * map.scaling;
-            double y = (point[1] - map.offset[1]) * map.scaling;
+            int n = map.Size;
+            double x = (point[0] - map.Offset[0]) * map.Scaling;
+            double y = (point[1] - map.Offset[1]) * map.Scaling;
             int i = (int)Math.Round(x), j = (int)Math.Round(y);
 
-            if (!(inside_map(map, i, j) &&
-                  inside_map(map, i, j + 1) &&
-                  inside_map(map, i + 1, j) &&
-                  inside_map(map, i + 1, j + 1)))
+            if (!(Inside_map(map, i, j) &&
+                  Inside_map(map, i, j + 1) &&
+                  Inside_map(map, i + 1, j) &&
+                  Inside_map(map, i + 1, j + 1)))
             {
                 value = 0;
                 return false;               /* The point is outside the region */
             }
 
-            value = map.grid[j * n + i].value * (1.0 - y + j) * (1.0 - x + i);
-            value += map.grid[(j + 1) * n + i].value * (y - j) * (1.0 - x + i);
-            value += map.grid[j * n + i + 1].value * (1.0 - y + j) * (x - i);
-            value += map.grid[(j + 1) * n + i + 1].value * (y - j) * (x - i);
+            value = map.Grid[j * n + i].Value * (1.0 - y + j) * (1.0 - x + i);
+            value += map.Grid[(j + 1) * n + i].Value * (y - j) * (1.0 - x + i);
+            value += map.Grid[j * n + i + 1].Value * (1.0 - y + j) * (x - i);
+            value += map.Grid[(j + 1) * n + i + 1].Value * (y - j) * (x - i);
 
             return true;
         }
 
-        public static void harmonic_write_ppm(HarmonicMap map, string filename)
+        public static void Harmonic_write_ppm(HarmonicMap map, string filename)
         {
-            int n = map.size;
+            int n = map.Size;
             StreamWriter f = new StreamWriter(filename);
 
             f.Write("P3\n%zu %zu\n255\n", n, n);
             for (int i = 0; i < n; ++i)
             {
                 for (int j = 0; j < n; ++j)
-                    if (map.grid[j * n + i].boundary)
+                    if (map.Grid[j * n + i].Boundary)
                         f.Write("255 0 0 ");
                     else
-                        f.Write("0 0 " + ((int)Math.Round(map.grid[j * n + i].value * 255.0)).ToString("N6"));
+                        f.Write("0 0 " + ((int)Math.Round(map.Grid[j * n + i].Value * 255.0)).ToString("N6"));
                 //f.Write("0 0 %d ", (int)Math.Round(map.grid[j * n + i].value * 255.0));
                 f.Write("\n");
             }
             f.Close();
         }
 
-        public static void harmonic_free(HarmonicMap map)
+        public static void Harmonic_free(HarmonicMap map)
         {
-            map.grid = null;
+            map.Grid = null;
             map = new HarmonicMap();
         }
 

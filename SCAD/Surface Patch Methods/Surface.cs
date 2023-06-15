@@ -22,9 +22,9 @@ namespace SCAD
 
 
     public class Surface<R>
-    //where D : Domain, new()
-    //where P : Parametrization
-    where R : Ribbon, new()
+        //where D : Domain, new()
+        //where P : Parametrization
+        where R : Ribbon, new()
     {
 
         Domain domain_ = new Domain();
@@ -37,13 +37,14 @@ namespace SCAD
 
         protected int n_;
         protected Parametrization param_ = default;
-        List<Ribbon> ribbons_ = new List<Ribbon>();
+        List<R> ribbons_ = new List<R>();
         private Mesh domainMesh = new Mesh();
         Parametrization_Method pm = new Parametrization_Method();
         Blending_Method bm = new Blending_Method();
 
         public Surface(Domain_Method dm, Parametrization_Method pm, Blending_Method bm)
         {
+            n_ = 0; use_gamma_ = true;
             SetDomain(dm);
             this.pm = pm;
             this.bm = bm;
@@ -63,7 +64,7 @@ namespace SCAD
         private SurfacePatch sP = new SurfacePatch();
         public Surface() { n_ = 0; use_gamma_ = true; }
 
-        public int n { get { return n_; } }
+        public int N { get { return n_; } }
         ~Surface() { }
 
         //public Surface(Surface other)       
@@ -98,31 +99,31 @@ namespace SCAD
             return uvs;
         }
 
-        public void setGamma(bool use_gamma)
+        public void SetGamma(bool use_gamma)
         {
             use_gamma_ = use_gamma;
         }
 
-        public void setCurve(int i, NurbsCurve curve)
+        public void SetCurve(int i, NurbsCurve curve)
         {
             if (n_ <= i)
             {
                 ribbons_.resize(i + 1);
                 n_ = i + 1;
             }
-            ribbons_[i] = newRibbon();
-            ribbons_[i].setCurve(curve);
+            ribbons_[i] = NewRibbon();
+            ribbons_[i].SetCurve(curve);
             domain_.SetSide(i, curve);
         }
 
-        public void setCurves(List<Curve> curves)
+        public void SetCurves(List<Curve> curves)
         {
             ribbons_.Clear();
             ribbons_.Capacity = (curves.Count);
             for (int i = 0; i < curves.Count; i++)
             {
-                ribbons_.Add(newRibbon());
-                ribbons_.Last().setCurve(curves[i].ToNurbsCurve());
+                ribbons_.Add(NewRibbon());
+                ribbons_.Last().SetCurve(curves[i].ToNurbsCurve());
 
             }
             //foreach (NurbsCurve curve in curves)
@@ -134,112 +135,112 @@ namespace SCAD
             n_ = curves.Count;
         }
 
-        public virtual void setupLoop()
+        public virtual void SetupLoop()
         {
             // Tasks:
             // - propagate adjacency information
             // - normalize curves
             // - reverse curves when needed (and normalize once again, for safety)
             for (int i = 0; i < n_; ++i)
-                ribbons_[i].curve().Reparameterize();
+                ribbons_[i].Curve().Reparameterize();
             for (int i = 0; i < n_; ++i)
             {
-                Ribbon rp = ribbons_[prev(i)], rn = ribbons_[next(i)];
-                ribbons_[i].setNeighbors(rp, rn);
+                Ribbon rp = ribbons_[Prev(i)], rn = ribbons_[Next(i)];
+                ribbons_[i].SetNeighbors(rp, rn);
                 if (i == 0)
                 {
-                    Point3d r_start = ribbons_[i].curve().PointAt(0.0);
-                    Point3d r_end = ribbons_[i].curve().PointAt(1.0);
-                    Point3d rn_start = rn.curve().PointAt(0.0);
-                    Point3d rn_end = rn.curve().PointAt(1.0);
+                    Point3d r_start = ribbons_[i].Curve().PointAt(0.0);
+                    Point3d r_end = ribbons_[i].Curve().PointAt(1.0);
+                    Point3d rn_start = rn.Curve().PointAt(0.0);
+                    Point3d rn_end = rn.Curve().PointAt(1.0);
                     double end_to_start = (r_end - rn_start).Length;
                     double end_to_end = (r_end - rn_end).Length;
                     double start_to_start = (r_start - rn_start).Length;
                     double start_to_end = (r_start - rn_end).Length;
                     if (Math.Min(start_to_start, start_to_end) < Math.Min(end_to_start, end_to_end))
                     {
-                        ribbons_[i].curve().Reverse();
-                        ribbons_[i].curve().Reparameterize();
+                        ribbons_[i].Curve().Reverse();
+                        ribbons_[i].Curve().Reparameterize();
                     }
                 }
                 else
                 {
-                    Point3d r_start = ribbons_[i].curve().PointAt(0.0);
-                    Point3d r_end = ribbons_[i].curve().PointAt(1.0);
-                    Point3d rp_end = rp.curve().PointAt(1.0);
+                    Point3d r_start = ribbons_[i].Curve().PointAt(0.0);
+                    Point3d r_end = ribbons_[i].Curve().PointAt(1.0);
+                    Point3d rp_end = rp.Curve().PointAt(1.0);
                     if ((r_end - rp_end).Length < (r_start - rp_end).Length)
                     {
-                        ribbons_[i].curve().Reverse();
-                        ribbons_[i].curve().Reparameterize();
+                        ribbons_[i].Curve().Reverse();
+                        ribbons_[i].Curve().Reparameterize();
                     }
                 }
             }
         }
 
-        public Vector3d ribbonHandler(int i)
+        public Vector3d RibbonHandler(int i)
         {
-            return ribbons_[i].handler();
+            return ribbons_[i].Handler();
         }
 
-        public void setRibbonHandler(int i, Vector3d h)
+        public void SetRibbonHandler(int i, Vector3d h)
         {
-            ribbons_[i].setHandler(h);
+            ribbons_[i].SetHandler(h);
         }
 
-        public void overrideNormalFence(int i, Vector3d fence)
+        public void OverrideNormalFence(int i, Vector3d fence)
         {
-            ribbons_[i].overrideNormalFence(fence);
+            ribbons_[i].OverrideNormalFence(fence);
         }
 
-        public double ribbonMultiplier(int i)
+        public double RibbonMultiplier(int i)
         {
-            return ribbons_[i].multiplier();
+            return ribbons_[i].Multiplier();
         }
 
-        public void setRibbonMultiplier(int i, double m)
+        public void SetRibbonMultiplier(int i, double m)
         {
-            ribbons_[i].setMultiplier(m);
+            ribbons_[i].SetMultiplier(m);
         }
 
-        public void resetRibbon(int i)
+        public void ResetRibbon(int i)
         {
-            ribbons_[i].reset();
+            ribbons_[i].Reset();
         }
-        public virtual void update(int i)
+        public virtual void Update(int i)
         {
-            if (domain_.update())
+            if (domain_.Update())
             {
                 //param_.update();
             }
-            ribbons_[i].update();
-            updateCorner(prev(i));
-            updateCorner(i);
+            ribbons_[i].Update();
+            UpdateCorner(Prev(i));
+            UpdateCorner(i);
         }
 
-        public virtual void update()
+        public virtual void Update()
         {
-            if (domain_.update())
+            if (domain_.Update())
             {
                 //param_.update();
             }
             foreach (var r in ribbons_)
             {
-                r.update();
+                r.Update();
             }
-            updateCorners();
+            UpdateCorners();
         }
 
-        public Domain domain()
+        public Domain Domain()
         {
             return domain_;
         }
 
-        public Ribbon ribbon(int i)
+        public Ribbon Ribbon(int i)
         {
             return ribbons_[i];
         }
 
-        public virtual Point3d eval(Point2d uv)
+        public virtual Point3d Eval(Point2d uv)
         {
             Point3d katoout = sP.Kato_Suv(uv.X, uv.Y);
             return katoout;
@@ -261,7 +262,7 @@ namespace SCAD
         //    return msh;
         //}
 
-        public virtual Mesh eval(int resolution)
+        public virtual Mesh Eval(int resolution)
         {
             TriMesh mesh = domain_.MeshTopology(resolution);
             List<Point2d> uvs = domain_.Parameters(resolution);
@@ -271,7 +272,7 @@ namespace SCAD
 
             foreach (var uv in uvs)
             {
-                points.Add(eval(uv));
+                points.Add(Eval(uv));
             }
 
             domainMesh = mesh.Getmesh;
@@ -284,7 +285,7 @@ namespace SCAD
             return msh;
         }
 
-        public virtual Mesh eval(Mesh rhinoMesh)
+        public virtual Mesh Eval(Mesh rhinoMesh)
         {
             Mesh mesh3d = rhinoMesh.DuplicateMesh();
             var uvs = rhinoMesh.Vertices.ToPoint3dArray().Select(pts3d => new Point2d(pts3d.X, pts3d.Y)).ToList();
@@ -295,7 +296,7 @@ namespace SCAD
 
             foreach (var uv in uvs)
             {
-                points.Add(eval(uv));
+                points.Add(Eval(uv));
             }
             for (int i = 0; i < uvs.Count; i++)
             {
@@ -305,41 +306,41 @@ namespace SCAD
             P = sP.GetParametrization;
             return mesh3d;
         }
-        protected virtual Ribbon newRibbon() { return new Ribbon(); }
+        protected virtual R NewRibbon() { return new R(); }
 
 
-        protected Point3d cornerCorrection(int i, double s1, double s2)
+        protected Point3d CornerCorrection(int i, double s1, double s2)
         {
             // Assumes that both s1 and s2 are 0 at the corner,
             // s1 increases towards corner (i-1), and s2 towards corner (i+1).
-            s1 = inrange(0, gamma(s1), 1);
-            s2 = inrange(0, gamma(s2), 1);
+            s1 = inrange(0, Gamma(s1), 1);
+            s2 = inrange(0, Gamma(s2), 1);
             return corner_data_[i].point
               + corner_data_[i].tangent1 * s1
               + corner_data_[i].tangent2 * s2
-              + rationalTwist(s1, s2, corner_data_[i].twist2, corner_data_[i].twist1) * s1 * s2;
+              + RationalTwist(s1, s2, corner_data_[i].twist2, corner_data_[i].twist1) * s1 * s2;
         }
-        protected Point3d sideInterpolant(int i, double si, double di)
+        protected Point3d SideInterpolant(int i, double si, double di)
         {
             si = inrange(0, si, 1);
-            di = Math.Max(gamma(di), 0.0);
-            return ribbons_[i].eval(new Point2d(si, di));
+            di = Math.Max(Gamma(di), 0.0);
+            return ribbons_[i].Eval(new Point2d(si, di));
         }
-        protected Point3d cornerInterpolant(int i, List<Point2d> sds)
+        protected Point3d CornerInterpolant(int i, List<Point2d> sds)
         {
-            double si = sds[i][0], si1 = sds[next(i)][0];
-            var vec = sideInterpolant(i, si, si1) + sideInterpolant(next(i), si1, 1.0 - si)
-              - cornerCorrection(i, 1.0 - si, si1);
+            double si = sds[i][0], si1 = sds[Next(i)][0];
+            var vec = SideInterpolant(i, si, si1) + SideInterpolant(Next(i), si1, 1.0 - si)
+              - CornerCorrection(i, 1.0 - si, si1);
             return new Point3d(vec.X, vec.Y, vec.Z);
         }
-        protected Point3d cornerInterpolantD(int i, List<Point2d> sds)
+        protected Point3d CornerInterpolantD(int i, List<Point2d> sds)
         {
-            double di = sds[i][1], di1 = sds[next(i)][1];
-            var vec = sideInterpolant(i, 1.0 - di1, di) + sideInterpolant(next(i), di, di1)
-              - cornerCorrection(i, di1, di);
+            double di = sds[i][1], di1 = sds[Next(i)][1];
+            var vec = SideInterpolant(i, 1.0 - di1, di) + SideInterpolant(Next(i), di, di1)
+              - CornerCorrection(i, di1, di);
             return new Point3d(vec.X, vec.Y, vec.Z);
         }
-        protected List<double> blendCorner(List<Point2d> sds)
+        protected List<double> BlendCorner(List<Point2d> sds)
         {
             List<double> blf = new List<double>();
             blf.Capacity = n_;
@@ -355,18 +356,18 @@ namespace SCAD
             {
                 for (int i = 0; i < n_; ++i)
                 {
-                    int ip = next(i);
+                    int ip = Next(i);
                     if (close_to_boundary > 1)
                         blf.Add(sds[i][1] < epsilon && sds[ip][1] < epsilon ? 1.0 : 0.0);
                     else if (sds[i][1] < epsilon)
                     {
                         double tmp = Math.Pow(sds[ip][1], -2);
-                        blf.Add(tmp / (tmp + Math.Pow(sds[prev(i)][1], -2)));
+                        blf.Add(tmp / (tmp + Math.Pow(sds[Prev(i)][1], -2)));
                     }
                     else if (sds[ip][1] < epsilon)
                     {
                         double tmp = Math.Pow(sds[i][1], -2);
-                        blf.Add(tmp / (tmp + Math.Pow(sds[next(ip)][1], -2)));
+                        blf.Add(tmp / (tmp + Math.Pow(sds[Next(ip)][1], -2)));
                     }
                     else
                         blf.Add(0.0);
@@ -377,7 +378,7 @@ namespace SCAD
                 double denominator = 0.0;
                 for (int i = 0; i < n_; ++i)
                 {
-                    blf.Add(Math.Pow(sds[i][1] * sds[next(i)][1], -2));
+                    blf.Add(Math.Pow(sds[i][1] * sds[Next(i)][1], -2));
                     denominator += blf.Last();
                 }
                 for (int i = 0; i < blf.Count; i++)
@@ -388,7 +389,7 @@ namespace SCAD
 
             return blf;
         }
-        protected List<double> blendSideSingular(List<Point2d> sds)
+        protected List<double> BlendSideSingular(List<Point2d> sds)
         {
             List<double> blf = new List<double>(); blf.Capacity = n_;
 
@@ -424,12 +425,12 @@ namespace SCAD
             return blf;
         }
 
-        protected List<double> blendCornerDeficient(List<Point2d> sds)
+        protected List<double> BlendCornerDeficient(List<Point2d> sds)
         {
             List<double> blf = new List<double>(); blf.Capacity = n_;
             for (int i = 0; i < n_; ++i)
             {
-                int ip = next(i);
+                int ip = Next(i);
                 if (sds[i][1] < epsilon && sds[ip][1] < epsilon)
                 {
                     blf.Add(1.0);
@@ -442,8 +443,8 @@ namespace SCAD
             return blf;
         }
 
-        protected int next(int i, int j = 1) { return (i + j) % n_; }
-        protected int prev(int i, int j = 1) { return (i + n_ - j) % n_; }
+        protected int Next(int i, int j = 1) { return (i + j) % n_; }
+        protected int Prev(int i, int j = 1) { return (i + n_ - j) % n_; }
 
 
 
@@ -465,43 +466,43 @@ namespace SCAD
             public Vector3d tangent1, tangent2, twist1, twist2;
         };
 
-        private void updateCorner(int i)
+        private void UpdateCorner(int i)
         {
             const double step = 1.0e-4;
-            int ip = next(i);
+            int ip = Next(i);
 
             Point3d point;
             Vector3d tangent1, tangent2, twist1, twist2;
             Vector3d[] der;
             Vector3d d1, d2;
             CornerData data = new CornerData();
-            der = ribbons_[i].curve().DerivativeAt(1.0, 1);
-            point = ribbons_[i].curve().PointAt(1.0);
+            der = ribbons_[i].Curve().DerivativeAt(1.0, 1);
+            point = ribbons_[i].Curve().PointAt(1.0);
             tangent1 = -der[1];
-            der = ribbons_[ip].curve().DerivativeAt(0.0, 1);
+            der = ribbons_[ip].Curve().DerivativeAt(0.0, 1);
             tangent2 = der[1];
-            d1 = ribbons_[i].crossDerivative(1.0);
-            d2 = ribbons_[i].crossDerivative(1.0 - step);
+            d1 = ribbons_[i].CrossDerivative(1.0);
+            d2 = ribbons_[i].CrossDerivative(1.0 - step);
             twist1 = (d2 - d1) / step;
-            d1 = ribbons_[ip].crossDerivative(0.0);
-            d2 = ribbons_[ip].crossDerivative(step);
+            d1 = ribbons_[ip].CrossDerivative(0.0);
+            d2 = ribbons_[ip].CrossDerivative(step);
             twist2 = (d2 - d1) / step;
             corner_data_[i] = new CornerData(point, tangent1, tangent2, twist1, twist2);
         }
 
-        private void updateCorners()
+        private void UpdateCorners()
         {
             corner_data_.resize(n_);
             for (int i = 0; i < n_; ++i)
-                updateCorner(i);
+                UpdateCorner(i);
         }
-        private double gamma(double d)
+        private double Gamma(double d)
         {
             if (use_gamma_)
                 return d / (2.0 * d + 1.0);
             return d;
         }
-        private static Vector3d rationalTwist(double u, double v, Vector3d f, Vector3d g)
+        private static Vector3d RationalTwist(double u, double v, Vector3d f, Vector3d g)
         {
             if (Math.Abs(u + v) < epsilon)
                 return new Vector3d(0, 0, 0);
