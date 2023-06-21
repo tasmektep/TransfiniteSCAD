@@ -102,7 +102,15 @@ namespace SCAD
         }
 
         public virtual Vector3d CrossDerivative(double s)
-        { return new Vector3d(); }
+        { 
+            return new Vector3d(); 
+        }
+
+        public virtual Vector3d CrossDerivative(double s, Vector3d norm)
+        {
+            return new Vector3d();
+        }
+
         public virtual Point3d Eval(Point2d sd)
         {
             return curve_.PointAt(sd[0]) + CrossDerivative(sd[0]) * sd[1];

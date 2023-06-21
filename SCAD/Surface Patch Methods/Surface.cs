@@ -39,6 +39,7 @@ namespace SCAD
         protected Parametrization param_ = default;
         List<R> ribbons_ = new List<R>();
         private Mesh domainMesh = new Mesh();
+        private Brep sphere = new Brep();
         Parametrization_Method pm = new Parametrization_Method();
         Blending_Method bm = new Blending_Method();
 
@@ -48,6 +49,11 @@ namespace SCAD
             SetDomain(dm);
             this.pm = pm;
             this.bm = bm;
+        }
+
+        private void SetSphere(Brep sphere)
+        {
+            this.sphere = sphere;
         }
 
         private void SetDomain(Domain_Method dm)
@@ -114,6 +120,28 @@ namespace SCAD
             ribbons_[i] = NewRibbon();
             ribbons_[i].SetCurve(curve);
             domain_.SetSide(i, curve);
+        }
+
+        public void SetCurves(List<Curve> curves, List<Curve> tcurves, Brep sphere)
+        {
+            ribbons_.Clear();
+            ribbons_.Capacity = (curves.Count);
+            for (int i = 0; i < curves.Count; i++)
+            {
+                ribbons_.Add(NewRibbon());
+                ribbons_.Last().SetCurve(curves[i].ToNurbsCurve());
+
+            }
+            //foreach (NurbsCurve curve in curves)
+            //{
+
+            //}
+
+            domain_.SetSides(curves);
+            domain_.SetRibbonSides(tcurves);
+            domain_.SetSphere(sphere);
+            SetSphere(sphere);
+            n_ = curves.Count;
         }
 
         public void SetCurves(List<Curve> curves)
@@ -242,10 +270,17 @@ namespace SCAD
 
         public virtual Point3d Eval(Point2d uv)
         {
-            Point3d katoout = sP.Kato_Suv(uv.X, uv.Y);
-            return katoout;
+            Point3d point_out = sP.GetSurfacePoint(uv.X, uv.Y);
+            return point_out;
+            //return gen_out;
             //return new Point3d();
         }
+
+        public SurfacePatch GetSurfacePatch { get { return sP; } } 
+      
+
+
+
 
         //public virtual Mesh eval(int resolution)
         //{
@@ -268,7 +303,8 @@ namespace SCAD
             List<Point2d> uvs = domain_.Parameters(resolution);
             List<Point3d> points = new List<Point3d>();
             points.Capacity = uvs.Count;
-            sP = new SurfacePatch(domain_, GetRibbons, pm, bm);
+
+            sP = new SurfacePatch(domain_, GetRibbons, corner_data_, pm, bm);
 
             foreach (var uv in uvs)
             {
@@ -292,7 +328,7 @@ namespace SCAD
             List<Point3d> points = new List<Point3d>();
             points.Capacity = uvs.Count;
 
-            sP = new SurfacePatch(domain_, GetRibbons, pm, bm);
+            sP = new SurfacePatch(domain_, GetRibbons, corner_data_, pm, bm);
             foreach (var uv in uvs)
             {
                 points.Add(Eval(uv));
@@ -339,6 +375,7 @@ namespace SCAD
               - CornerCorrection(i, di1, di);
             return new Point3d(vec.X, vec.Y, vec.Z);
         }
+
         protected List<double> BlendCorner(List<Point2d> sds)
         {
             List<double> blf = new List<double>();
@@ -451,19 +488,65 @@ namespace SCAD
         public List<Ribbon> GetRibbons { get { return ribbons_.Select(x => (Ribbon)x).ToList(); } }
 
 
-        private struct CornerData
-        {
-            public CornerData(Point3d point, Vector3d tangent1, Vector3d tangent2, Vector3d twist1, Vector3d twist2)
-            {
-                this.point = point;
-                this.tangent1 = tangent1;
-                this.tangent2 = tangent2;
-                this.twist1 = twist1;
-                this.twist2 = twist2;
-            }
-            public Point3d point;
-            public Vector3d tangent1, tangent2, twist1, twist2;
-        };
+        //private struct CornerData
+        //{
+        //    public CornerData(Point3d point, Vector3d tangent1, Vector3d tangent2, Vector3d twist1, Vector3d twist2)
+        //    {
+        //        this.point = point;
+        //        this.tangent1 = tangent1;
+        //        this.tangent2 = tangent2;
+        //        this.twist1 = twist1;
+        //        this.twist2 = twist2;
+        //    }
+        //    public Point3d point;
+        //    public Vector3d tangent1, tangent2, twist1, twist2;
+        //};
+
+        //private void UpdateCorner(int i)
+        //{
+        //    var curves = domain_.Curves;
+        //    const double step = 1.0e-4;
+        //    int ip = Next(i);
+
+        //    sphere.Surfaces[0].ClosestPoint(curves[i].PointAt(1), out double longparam, out double latparam);
+        //    Vector3d sphereVec = Vector3d.CrossProduct(sphere.Surfaces[0].NormalAt(longparam, latparam), curves[i].TangentAt(1));
+        //    sphereVec.Unitize();
+
+        //    Point3d point;
+        //    Vector3d tangent1, tangent2, twist1, twist2;
+        //    Vector3d der;
+        //    Vector3d d1, d2;
+        //    der = sphereVec;
+        //    point = curves[i].PointAt(1.0);
+        //    tangent1 = der;//-der
+
+        //    sphere.Surfaces[0].ClosestPoint(curves[ip].PointAt(0), out double longparamip, out double latparamip);
+        //    Vector3d sphereVecIP = Vector3d.CrossProduct(sphere.Surfaces[0].NormalAt(longparamip, latparamip), curves[ip].TangentAt(0));
+        //    sphereVecIP.Unitize();
+
+        //    der = sphereVecIP;
+        //    tangent2 = der;
+
+        //    sphere.Surfaces[0].ClosestPoint(curves[i].PointAt(1), out longparam, out latparam);
+        //    Vector3d sphereNorm1 = sphere.Surfaces[0].NormalAt(longparam, latparam);
+        //    sphere.Surfaces[0].ClosestPoint(curves[i].PointAt(1 - step), out longparam, out latparam);
+        //    Vector3d sphereNorm2 = sphere.Surfaces[0].NormalAt(longparam, latparam);
+
+        //    d1 = ribbons_[i].CrossDerivative(1.0, sphereNorm1);
+        //    d2 = ribbons_[i].CrossDerivative(1.0 - step, sphereNorm2);
+        //    twist1 = (d2 - d1) / step;
+
+        //    sphere.Surfaces[0].ClosestPoint(curves[ip].PointAt(0), out longparam, out latparam);
+        //    sphereNorm1 = sphere.Surfaces[0].NormalAt(longparam, latparam);
+        //    sphere.Surfaces[0].ClosestPoint(curves[ip].PointAt(step), out longparam, out latparam);
+        //    sphereNorm2 = sphere.Surfaces[0].NormalAt(longparam, latparam);
+
+        //    d1 = ribbons_[ip].CrossDerivative(0.0, sphereNorm1);
+        //    d2 = ribbons_[ip].CrossDerivative(step, sphereNorm2);
+        //    twist2 = (d2 - d1) / step;
+        //    corner_data_[i] = new CornerData(point, tangent1, tangent2, twist1, twist2);
+        //}
+
 
         private void UpdateCorner(int i)
         {

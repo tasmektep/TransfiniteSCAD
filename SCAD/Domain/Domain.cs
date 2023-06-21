@@ -34,6 +34,8 @@ namespace SCAD
         protected Point2d center_;
 
         protected List<Curve> curves_ = new List<Curve>();
+        protected List<Curve> tcurves_ = new List<Curve>();
+        protected Brep sphere_ = new Brep();
         int resolution;
         List<Point2d> parameters_ = new List<Point2d>();
         protected List<Point2d> vertices_ = new List<Point2d>();
@@ -131,6 +133,8 @@ namespace SCAD
         }
 
         public List<Curve> Curves { get { return curves_; } }
+        public List<Curve> TCurves { get { return tcurves_; } }
+        public Brep Sphere { get { return sphere_; } }
 
         //public (int, int) DomainSize { get { return (n_, n_); } }
 
@@ -172,6 +176,16 @@ namespace SCAD
         public void SetSides(List<Curve> curves)
         {
             curves_ = curves;
+        }
+
+        public void SetRibbonSides(List<Curve> curves)
+        {
+            tcurves_ = curves;
+        }
+
+        public void SetSphere(Brep sphere)
+        {
+            sphere_ = sphere;
         }
 
         // Computes everything from vertices

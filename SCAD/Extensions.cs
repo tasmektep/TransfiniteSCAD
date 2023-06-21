@@ -9,6 +9,20 @@ namespace SCAD
 {
     public static class Extensions
     {
+        public struct CornerData
+        {
+            public CornerData(Point3d point, Vector3d tangent1, Vector3d tangent2, Vector3d twist1, Vector3d twist2)
+            {
+                this.point = point;
+                this.tangent1 = tangent1;
+                this.tangent2 = tangent2;
+                this.twist1 = twist1;
+                this.twist2 = twist2;
+            }
+            public Point3d point;
+            public Vector3d tangent1, tangent2, twist1, twist2;
+        };
+
 
         public static void Reparameterize(this NurbsCurve curve)
         {
@@ -29,6 +43,7 @@ namespace SCAD
         {
             return ((index % list_count) + list_count) % list_count;
         }
+
 
         public static T Next<T>(this List<T> list, int index)
         {

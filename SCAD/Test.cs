@@ -32,6 +32,7 @@ namespace SCAD
             pManager.AddIntegerParameter("Parametrization", "P", "Parametrization method", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Blending", "B", "Blending Method", GH_ParamAccess.item);
             pManager.AddMeshParameter("Mesh", "M", "", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Sphere", "Sph", "", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -40,12 +41,12 @@ namespace SCAD
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddMeshParameter("Model", "M", "Mesh Model", GH_ParamAccess.item);
-            pManager.AddCurveParameter("Domain C", "D", "Domain curves", GH_ParamAccess.list);
+            pManager.AddPointParameter("Domain C", "D", "Domain curves", GH_ParamAccess.list);
             pManager.AddPointParameter("Domain V", "Dv", "Domain vertices", GH_ParamAccess.list);
             pManager.AddMeshParameter("Domain Mesh", "Dm", "Domain Mesh Model", GH_ParamAccess.item);
-            pManager.AddPlaneParameter("Ribbon Vector", "Rv", "Ribbon vectors", GH_ParamAccess.list);
+            pManager.AddPointParameter("Ribbon Vector", "Rv", "Ribbon vectors", GH_ParamAccess.list);
             pManager.AddPointParameter("Ribbon center", "Pt", "Ribbon center", GH_ParamAccess.list);
-            pManager.AddTextParameter("Ribbon Vector", "Rv", "Ribbon vectors", GH_ParamAccess.tree);
+            pManager.AddCurveParameter("Hermit Curves", "H", "Hermit Curves", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -58,6 +59,7 @@ namespace SCAD
             var ptsDomain = new List<Point3d>();
             var rhinoMesh = new Mesh();
             var domainMesh = new Mesh();
+            var sphere = new Brep();
 
             int d = 0, p = 0, b = 0;
             DA.GetDataList(0, curves_);
@@ -65,14 +67,23 @@ namespace SCAD
             DA.GetData(2, ref p);
             DA.GetData(3, ref b);
             DA.GetData(4, ref rhinoMesh);
+            DA.GetData(5, ref sphere);
+
+            List<Curve> tcurve = new List<Curve>();
+            //for (int i = (curves_.Count/2); i < curves_.Count; i++)
+            //{
+            //    tcurve.Add(curves_[i].DuplicateCurve());
+            //}
+            /////burdaki t curve domain içine yazılıp, katoda second curve olarak kullanılacak...
+            //curves_.RemoveRange((curves_.Count / 2), (curves_.Count / 2));
 
             var curves2 = curves_.Select(x => (Curve)x.ToNurbsCurve()).ToList();
 
-
+            
             var dm_e = (Domain_Method)d;
             var pm = (Parametrization_Method)p;
             var bm = (Blending_Method)b;
-            int resolution = 20;
+            int resolution = 40;
             #region
             //Domain dm = new Domain();
 
@@ -86,8 +97,7 @@ namespace SCAD
             #endregion
 
             var surf = new Surface<RibbonCompatible>(dm_e, pm, bm);
-
-            surf.SetCurves(curves2);
+            surf.SetCurves(curves2, tcurve, sphere);
             surf.SetupLoop();
             surf.Update();
 
@@ -108,7 +118,7 @@ namespace SCAD
 
             List<Point3d> pts = new List<Point3d>();
 
-            pts.Add(surf.Eval(new Point2d(0.94, 0.94)));
+           pts.Add(surf.Eval(new Point2d(0.94, 0.94)));
 
 
             //for (int i = 0; i < uvs.Count; i++)
@@ -159,12 +169,33 @@ namespace SCAD
             ///
             #endregion
 
+            #region ribbon sphere
+            List<Point3d> vecpts = new List<Point3d>();
+            List<Vector3d> vec = new List<Vector3d>();
+            for (int i = 0; i < curves2.Count; i++)
+            {
+                for (double ii = 0; ii < 1; ii = ii + 0.02)
+                {
+                    sphere.Surfaces[0].ClosestPoint(curves2[i].PointAt(ii), out double longparam, out double latparam);
+                    Vector3d spherevec = Vector3d.CrossProduct(sphere.Surfaces[0].NormalAt(longparam, latparam), curves2[i].TangentAt(ii));
+                    spherevec.Unitize();
+
+                    vecpts.Add(curves2[i].PointAt(ii));
+                    vec.Add(spherevec);
+                }
+            }
+            var hermits = surf.GetSurfacePatch.GetHermits;
+            
+            #endregion
+
             DA.SetData(0, msh);
-            //DA.SetDataList(2, dm.Vertices);
+            //DA.SetData(1, ....);
+            DA.SetDataList(2, surf.GetSurfacePatch.GetPoints);
+            DA.SetDataList(1, surf.GetSurfacePatch.GetUv);
             DA.SetData(3, domainMesh);
-            //DA.SetDataList(4, sP.planes);
-            DA.SetDataList(5, pts);
-            //DA.SetDataTree(6, stringtree);
+            DA.SetDataList(4, vec);
+            DA.SetDataList(5, vecpts);
+            DA.SetDataList(6, hermits);
 
         }
         

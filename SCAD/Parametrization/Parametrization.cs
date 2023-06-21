@@ -135,7 +135,7 @@ namespace SCAD
             HarmonicMapList_di = new List<HarmonicMap>();
             List<(double, double)> output = new List<(double, double)>();
             int i_before, i_after, selected_curve = 2;
-            bool biharmonic = true;
+            bool biharmonic =   false;
             double epsilon = 1.0e-5;
             int levels = 9;
             double value = 1;
@@ -215,11 +215,7 @@ namespace SCAD
                                 idle.Insert(xx, asd);
                                 idle.Insert(xx, asd);
                                 idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
+                                idle.Insert(xx, asd); 
                                 idle.Insert(xx, asd);
                                 idle.Insert(xx, asd);
                                 idle.Insert(xx, asd);
@@ -301,10 +297,7 @@ namespace SCAD
                                 idle.Insert(xx, asd);
                                 idle.Insert(xx, asd);
                                 idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
+
                                 break;
                             }
                         }

@@ -43,7 +43,7 @@ namespace SCAD
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            var surf = new SCAD.Surface<RibbonCompatible>(Domain_Method.Domain_Regular,Parametrization_Method.RadialDistanceFunction, Blending_Method.Special_Side_Blending);
+            var surf = new SCAD.Surface<RibbonScad>(Domain_Method.Domain_Regular,Parametrization_Method.RadialDistanceFunction, Blending_Method.Special_Side_Blending);
             int resolution = 30;
             double scaling = 5;
             double ribbon_length = 0.15;
@@ -100,8 +100,26 @@ namespace SCAD
                     pv.Add(surf.Ribbon(i).Eval(new Point2d(u, ribbon_length)));
                     var pt = surf.Ribbon(i).Curve().PointAt(u);
                     ptList.Add(pt);
-
                     var vec = surf.Ribbon(i).Eval(new Point2d(u, ribbon_length)) - pt;
+
+                    if (i == 0)
+                        vec = new Vector3d(0, 1, 0.2);
+                    if (i == 1)
+                        vec = new Vector3d(-1, 0, 0.2);
+                    if (i == 2)
+                    {
+                        //T = new Vector3d(0, -1, 0.2);
+                        vec = (1 - u) * new Vector3d(0, -1, 0.2) + u * new Vector3d(-1, -1, 0.2);
+                    }                    
+                    if (i == 3)
+                    {
+                        //vec = new Vector3d(-1, 0, 0.2);
+                        vec = (1 - u) * new Vector3d(-1, -1, 0.2) + u * new Vector3d(-1, 0, 0.2);
+                    }                        
+                    if (i == 4)
+                        vec = new Vector3d(0, -1, 0.2);
+                    if (i == 5)
+                        vec = new Vector3d(1, 0, 0.2);
                     //vec.Unitize();
                     vecList.Add(vec);
                 }
