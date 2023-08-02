@@ -19,12 +19,25 @@ namespace SCAD
         public List<Vector3d> vectors = new List<Vector3d>();
         public List<Plane> planes = new List<Plane>();
         public List<Ribbon> ribbons = new List<Ribbon>();
+        private List<Curve> ribbonCurves = new List<Curve>();
+        private bool manuelRibbons = false;
+
         /// Isocurve Mean value
 
         public SurfacePatch()
         { }
 
-        public Parametrization GetParametrization { get {return prm; } }
+        public List<Curve> SetRibbonCurves
+        {
+            set
+            {
+                ribbonCurves = value;
+                manuelRibbons = true;
+            }
+        }
+
+
+        public Parametrization GetParametrization { get { return prm; } }
         public SurfacePatch(Domain dm, List<Ribbon> ribbons, Parametrization_Method method, Blending_Method blending_method = Blending_Method.Special_Side_Blending)
         {
             this.dm = dm;
@@ -34,6 +47,7 @@ namespace SCAD
             else if (method == Parametrization_Method.Harmonic_Pt)
                 prm = new Parametrization(Parametrization_Method.Harmonic_Pt, dm);
             this.ribbons = ribbons;
+            manuelRibbons = false;
         }
 
         /// <summary>
@@ -49,36 +63,28 @@ namespace SCAD
         {
             List<Curve> curves = dm.Curves;
 
-            List<double> si,di;
+            List<double> si, di;
             (si, di) = prm.GetPoint(u, v);
 
             BlendingFunctions blending = new BlendingFunctions(blending_method);
             List<double> Value = blending.GetBlending(di);
-       
+
             Point3d r_sum = new Point3d();
 
             for (int i = 0; i < curves.Count; i++)
             {
-                Plane VecPlane = new Plane();
+                //Plane VecPlane = new Plane();
                 //double s = curves[i].Domain.Min + si[i] * (curves[i].Domain.Max - curves[i].Domain.Min);
                 curves[i].Domain = new Interval(0.0, 1.0);
                 Vector3d crossproduct = Vector3d.CrossProduct(curves[i].TangentAt(si[i]), curves[i].CurvatureAt(si[i]));
                 //Vector3d T = (ribbons[i].eval(new Point2d(si[i], di[i]))- curves[i].PointAt(si[i])); // Ribbon vector      
-                Vector3d T = (ribbons[i].Eval(new Point2d(si[i], 1.0))- curves[i].PointAt(si[i])); // Ribbon vector      
-                //if (i ==0)
-                //    T = new Vector3d(0,1,0);        
-                //if (i ==1)
-                //    T = new Vector3d(-1,0,0);         
-                //if (i ==2)
-                //    T = new Vector3d(0,-1,0);         
-                //if (i ==3)
-                //    T = new Vector3d(-1,0,0);         
-                //if (i ==4)
-                //    T = new Vector3d(0,-1,0);        
-                //if (i ==5)
-                //    T = new Vector3d(1,0,0);       
-                //T.Unitize();
-                planes.Add(VecPlane);
+                Vector3d T = (ribbons[i].Eval(new Point2d(si[i], 1.0)) - curves[i].PointAt(si[i])); // Ribbon vector  
+                                                                                                    //if (manuelRibbons)
+                                                                                                    //{
+                T = ribbonCurves[i + curves.Count / 2].PointAt(si[i]) - ribbonCurves[i].PointAt(si[i]);
+                T.Unitize();
+                //}
+                //planes.Add(VecPlane);
                 Point3d r = curves[i].PointAt(si[i]) + (di[i] * T);
                 vectors.Add(ribbons[i].Eval(new Point2d(si[i], di[i])) - curves[i].PointAt(si[i]));
                 centers.Add(curves[i].PointAt(si[i]));

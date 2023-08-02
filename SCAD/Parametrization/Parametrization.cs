@@ -134,8 +134,8 @@ namespace SCAD
             HarmonicMapList_si = new List<HarmonicMap>();
             HarmonicMapList_di = new List<HarmonicMap>();
             List<(double, double)> output = new List<(double, double)>();
-            int i_before, i_after, selected_curve = 2;
-            bool biharmonic = true;
+            int i_before, i_after, selected_curve = 999;
+            bool biharmonic = false;
             double epsilon = 1.0e-5;
             int levels = 9;
             double value = 1;
@@ -208,22 +208,22 @@ namespace SCAD
                             if (xx == 3)
                             {
                                 Point3d asd = new Point3d(idle[xx]);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
                                 break;
                             }
                         }
@@ -289,22 +289,22 @@ namespace SCAD
                             if (xx == 3)
                             {
                                 Point3d asd = new Point3d(idle[xx]);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
-                                idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
+                                //idle.Insert(xx, asd);
                                 break;
                             }
                         }

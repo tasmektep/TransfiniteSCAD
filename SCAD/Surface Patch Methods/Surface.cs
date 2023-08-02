@@ -285,7 +285,7 @@ namespace SCAD
             return msh;
         }
 
-        public virtual Mesh Eval(Mesh rhinoMesh)
+        public virtual Mesh Eval(Mesh rhinoMesh, List<Curve> ribbonCurves = null)
         {
             Mesh mesh3d = rhinoMesh.DuplicateMesh();
             var uvs = rhinoMesh.Vertices.ToPoint3dArray().Select(pts3d => new Point2d(pts3d.X, pts3d.Y)).ToList();
@@ -293,6 +293,8 @@ namespace SCAD
             points.Capacity = uvs.Count;
 
             sP = new SurfacePatch(domain_, GetRibbons, pm, bm);
+            if (ribbonCurves != null)
+                sP.SetRibbonCurves = ribbonCurves;
             foreach (var uv in uvs)
             {
                 points.Add(Eval(uv));

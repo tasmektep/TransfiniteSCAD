@@ -31,7 +31,9 @@ namespace SCAD
             pManager.AddIntegerParameter("Domain Type", "D", "Domain Type", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Parametrization", "P", "Parametrization method", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Blending", "B", "Blending Method", GH_ParamAccess.item);
-            pManager.AddMeshParameter("Mesh", "M", "", GH_ParamAccess.item);
+            pManager.AddMeshParameter("Domain Mesh", "M", "", GH_ParamAccess.item);
+            pManager.AddCurveParameter("Curves", "C", "", GH_ParamAccess.list);
+            pManager[5].Optional = true;
         }
 
         /// <summary>
@@ -58,6 +60,7 @@ namespace SCAD
             var ptsDomain = new List<Point3d>();
             var rhinoMesh = new Mesh();
             var domainMesh = new Mesh();
+            List<Curve> ribbonCurves = new List<Curve>();
 
             int d = 0, p = 0, b = 0;
             DA.GetDataList(0, curves_);
@@ -72,7 +75,7 @@ namespace SCAD
             var dm_e = (Domain_Method)d;
             var pm = (Parametrization_Method)p;
             var bm = (Blending_Method)b;
-            int resolution = 20;
+            int resolution = 10;
             #region
             //Domain dm = new Domain();
 
@@ -92,10 +95,6 @@ namespace SCAD
             surf.Update();
 
             #region Visulize domain
-            //var dm = surf.GetDomain;
-            //var mesh = dm.MeshTopology(resolution);
-            //var uvs = dm.Parameters(resolution);
-            //var domainMesh = mesh.Getmesh.DuplicateMesh();
             var msh = new Mesh();
             if (dm_e == Domain_Method.Domain_Regular)
             {
@@ -103,44 +102,21 @@ namespace SCAD
                 domainMesh = surf.GetDomainMesh;
             }
             else
-                msh = surf.Eval(rhinoMesh);
+            {
+                //if (DA.GetDataList(5, ribbonCurves))
+                DA.GetDataList(5, ribbonCurves);
+                    msh = surf.Eval(rhinoMesh, ribbonCurves);
+                //else
+                //    msh = surf.Eval(rhinoMesh);
+
+            }
             var pms = surf.GetParametrization;
 
             List<Point3d> pts = new List<Point3d>();
-
             pts.Add(surf.Eval(new Point2d(0.94, 0.94)));
-
-
-            //for (int i = 0; i < uvs.Count; i++)
-            //    ptsDomain.Add(new Point3d(uvs[i].X, uvs[i].Y, 0));
-            //domainMesh.Vertices.AddVertices(ptsDomain);
             #endregion
 
             #region
-            //var dm = surf.GetDomain;
-            //var mesh = dm.MeshTopology(resolution);
-            //var uvs = dm.Parameters(resolution);
-            //var msh = mesh.Getmesh;
-            //var pts = new List<Point3d>();
-            //var ptsDomain = new List<Point3d>();
-            //var sP = new SurfacePatch(dm, surf.GetRibbons, pm, bm);
-            //var domainMesh = msh.DuplicateMesh();
-            //for (int i = 0; i < uvs.Count; i++)
-            //{
-            //    ptsDomain.Add(new Point3d(uvs[i].X, uvs[i].Y, 0));
-            //    Point3d katoout = sP.Kato_Suv(uvs[i].X, uvs[i].Y);
-            //    pts.Add(katoout);
-            //}
-
-            //List<Line> lines = new List<Line>();
-            //for (int i = 0; i < sP.vectors.Count; i++)
-            //{
-            //    lines.Add(new Line(sP.centers[i], sP.vectors[i]));
-            //}
-
-            //var sd = dm.Bounds;
-            //msh.Vertices.AddVertices(pts);
-            //msh.VertexColors.SetColors(Enumerable.Repeat(System.Drawing.Color.Silver, pts.Count).ToArray());
             #endregion
 
             #region Harmonic map datatree contruction for visualization
@@ -167,7 +143,7 @@ namespace SCAD
             //DA.SetDataTree(6, stringtree);
 
         }
-        
+
 
         //private string writeroutput(HarmonicMap map, List<Point3f> pointss)
         //{
